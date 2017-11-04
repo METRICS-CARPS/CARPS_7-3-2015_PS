@@ -1,0 +1,325 @@
+---
+title: "CARPS Reproducibility Report"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+#### Article ID: 7-3-2015_PS
+#### Pilot 1: Danielle Boles
+#### Co-pilot: Michael Ko
+#### Start date: 10/27/17
+#### End date: 11/3/17 
+
+-------
+
+#### Methods summary: 
+Participants (N=21) performed switch trials and repeat trials and were presented unconcious cues. Unconscious cues were followed by a mask (X) and included letters "O" (non-predictive cue), "M" (switch predictive cue), and "T" (repeat predictive cue). One task was to choose the larger value of two values if surrounded by a green box. The other task was to choose the value with the larger font if surrounded by a blue box. Switch trials were trials alternating green and blue boxes. Reaction times and performance accuracy of switch and repeat trials are compared.
+
+------
+
+#### Target outcomes: 
+Performance on switch trials, relative to repeat trials,
+incurred a switch cost that was evident in longer RTs (836
+vs. 689 ms) and lower accuracy rates (79% vs. 92%). If
+participants were able to learn the predictive value of the
+cue that preceded only switch trials and could instantiate
+relevant anticipatory control in response to it, the performance
+on switch trials preceded by this cue would be
+better than on switch trials preceded by the nonpredictive
+cue. This was indeed the case (mean RT-predictive
+cue: 819 ms; nonpredictive cue: 871 ms; mean difference
+= 52 ms, 95% confidence interval, or CI = [19.5,
+84.4]), two-tailed paired t(20) = 3.34, p < .01. However,
+error rates did not differ across these two groups of switch trials (predictive cue: 78.9%; nonpredictive cue: 78.8%), p = .8.
+
+------
+
+[The chunk below sets up some formatting options for the R Markdown document]
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE, warning=FALSE, message=FALSE)
+```
+
+## Step 1: Load packages
+
+[Some useful packages are being loaded below. You can add any additional ones you might need too.]
+
+```{r}
+library(tidyverse) # for data munging
+library(knitr) # for kable table formating
+library(haven) # import and export 'SPSS', 'Stata' and 'SAS' Files
+library(readxl) # import excel files
+library(CARPSreports) # custom report functions
+library(broom)
+```
+
+## Step 2: Load data
+
+```{r warning=FALSE}
+# This reads all the particiapnts data (each is in a seperase xls file) in and combines them into one dataframe
+# Each xls has 250 rows, the rest is their calculations using excel, which we don't want in the data
+files <- dir('data/Experiment 1')
+
+data <- data.frame()
+id <- 1
+for (file in files){
+  if(file != 'Codebook.xls'){
+    temp_data <- read_xls(file.path('data/Experiment 1', file))
+    temp_data$id <- id
+    id <- id + 1
+    temp_data <- temp_data[1:250, ]
+    data <- rbind(data, temp_data)
+  }
+}
+```
+
+## Step 3: Tidy data
+
+Each row is an observation. The data is already in tidy.
+
+```{r}
+# each trial is an observation
+# the data is in tidy already
+```
+
+## Step 4: Run analysis
+
+### Pre-processing
+
+The codebook for Experiment 1 listed O, T, and M as the only primes that they used. However, we found that some participants had primes 2, 4, and 8 instead.
+We inferred that 2 is the nonpredictive cue, 4 is the repeat predictive cue and 8 as the switch predictive cue based on how the other columns were named. 
+Thus we will proceed the analysis with this assumption by recoding the primes this way.
+
+```{r recode}
+data$Prime <- recode(data$Prime, '2' = "O", '4' = "T", '8' = "M")
+
+#recode variables to make referencing easier
+data$Prime <- recode(data$Prime, 'O' = "Nonpredictive Cue", 'M' = "Switch Predictive Cue", 'T' = "Repeat Predictive Cue")
+data$TrialType <- recode(data$TrialType, '0' = "Repeat Trials", '1' = "Repeat Trials", '2' = "Switch Trials")
+
+
+```
+
+### Descriptive statistics
+
+We will first try to reproduce median reaction time of switch trials and non switch trials.
+
+> Performance on switch trials, relative to repeat trials,
+incurred a switch cost that was evident in longer RTs (836
+vs. 689 ms)
+
+We used median as the author's instructed to use median for reaction time unless otherwise reported.
+
+```{r median_RT}
+med_RT <- data %>% 
+        group_by(TrialType) %>% 
+        summarise(median_RT = median(RT))
+
+kable(med_RT)
+
+```
+
+These values are slightly off. There is ambiguity in how to calculate this statistics which is detailed below. 
+
+[INSUFFICIENT INFORMATION ERROR]
+
+```{r median_RT diff}
+compareValues(reportedValue = 836, obtained = 812.94, isP = F)
+compareValues(reportedValue = 689, obtained = 665.06, isP = F)
+
+```
+
+-----------------
+
+Next we will try to reproduce the accuracy of switch trials and non switch trials.
+
+> Performance on switch trials, relative to repeat trials,
+incurred a switch cost that was evident in [...] lower 
+accuracy rates (79% vs. 92%)
+
+
+```{r mean_Correct_Response}
+mean_RespCorr <- data %>% 
+        group_by(TrialType) %>%
+        summarise(accuracy = mean(RespCorr))
+
+kable(mean_RespCorr)
+
+
+```
+
+These values match.
+
+--------------------
+
+Now we will analyze Predicitve Switch Cues vs Nonpredictive Switch Cues. Let's start with reaction time.
+
+> This was indeed the case (mean RT-predictive
+cue: 819 ms; nonpredictive cue: 871 ms; ... )
+
+Later the authors do a t test with 20 as the degrees of freedoms. So we will 
+assume that these mean values come from individual medians of RT.
+
+```{r mean Prime RT}
+mean_Prime_RT_Ind <- data %>% filter(TrialType == "Switch Trials") %>% group_by(id, Prime) %>%summarise(meanRT = mean(RT)) #Individual Means
+mean_Prime_RT <- mean_Prime_RT_Ind %>% group_by(Prime) %>% summarise(grandmeanRT = mean(meanRT)) #Grand Means
+
+kable(mean_Prime_RT)
+```
+
+These numbers doesn't match. There is ambiguity on how to calculate this statstic which is detailed below.
+
+[INSUFFICIENT INFORMATION ERROR]
+
+```{r mean Prime RT diff}
+compareValues(reportedValue = 819, obtained = 883.4, isP = F)
+compareValues(reportedValue = 871, obtained = 907.8, isP = F)
+```
+
+---------------------------
+
+Next we will try to reproduce accuracy of switch predicitve cues vs switch nonpredictive cues.
+
+> However, error rates did not differ across these two 
+groups of switch trials (predictive cue: 78.9%; nonpredictive cue: 78.8%)
+
+Again, we will asssume that the accuracy statstic was calculated from the mean of each individual participant's accuracy.
+
+```{r Prime Accuracy}
+mean_Prime_RespCorr_Ind <- data %>% filter(TrialType == "Switch Trials") %>% group_by(id, Prime) %>% summarise(meanCorr = mean(RespCorr)) #Individual Means
+mean_Prime_RespCorr <- mean_Prime_RespCorr_Ind %>% group_by(Prime) %>% summarise(grandmeanCorr = mean(meanCorr)) #Grand Means
+
+kable(mean_Prime_RespCorr)
+```
+
+These numbers are very close to the reported numbers. The difference is 
+probably due to rounding. We will note this difference anyways.
+
+```{r Prime Accuracy Diff}
+compareValues(reported = .789, obtained = .7994, isP = F)
+compareValues(reported = .788, obtained = .7803, isP = F)
+```
+
+### Inferential statistics
+
+The first claim is that in switch trials, predictive cues lead to statsitically significant faster reaction times 
+than nonpredictive cues.
+
+> ... the performance on switch trials preceded by this cue would be
+better than on switch trials preceded by the nonpredictive
+cue. This was indeed the case (mean RT-predictive
+cue: 819 ms; nonpredictive cue: 871 ms; mean difference
+= 52 ms, 95% confidence interval, or CI = [19.5,
+84.4]), two-tailed paired t(20) = 3.34, p < .01.
+
+```{r Prime RT test}
+mean_Prime_RT_Ind <- mean_Prime_RT_Ind %>% spread(Prime, meanRT) #spreading so that the cues are easier to compare
+test <- t.test(mean_Prime_RT_Ind[['Nonpredictive Cue']], mean_Prime_RT_Ind[['Switch Predictive Cue']], paired = T) 
+
+kable(tidy(test))
+```
+
+We do not find the same p value as the original paper. There is ambiguity in how to calculate this statistic which is detailed below.
+
+[INSUFFICIENT INFORMATION ERROR]
+
+```{r Prime RT test diff}
+compareValues(reportedValue = .0016, obtained = .3847, isP = T) #p reported Value was calculated from the t statistic and df in the paper
+```
+
+-----------------
+
+Next we will test their second claim.
+
+> However, error rates did not differ across these two groups of 
+switch trials (predictive cue: 78.9%; nonpredictive cue: 78.8%), p = .8.
+
+```{r mean Prime accuracy test}
+mean_Prime_RespCorr_Ind <- mean_Prime_RespCorr_Ind %>% spread(Prime, meanCorr) #spreading so that the cues are easier to compare
+test <- t.test(mean_Prime_RespCorr_Ind[['Nonpredictive Cue']], mean_Prime_RespCorr_Ind[['Switch Predictive Cue']], paired = TRUE)
+
+kable(tidy(test))
+```
+
+Although still insigificant, the p value is very different from what was reported.
+
+```{r mean Prime accuracy test diff}
+compareValues(reportedValue = .8, obtained = .2945, isP = T)
+```
+
+
+## Step 5: Conclusion
+
+[Include the carpsReport function below]
+
+```{r}
+carpsReport(Report_Type = "pilot", 
+     Article_ID = "7-3-2015_PS", 
+     Insufficient_Information_Errors = 3, 
+     Decision_Errors = 1, 
+     Major_Numerical_Errors = 2, 
+     Time_to_Complete = 150, 
+     Author_Assistance = FALSE)
+```
+
+This reproducibility check was a failure. Generally, all the reaction time statistics (even the means) were different from what was reported. This failure can be attributed to a number of reasons.
+
+**Poor name choice for variables**
+
+There is a variable "CorrResp" (1 or 0) and another variable "RespCorr" (TRUE or FALSE). We used "RespCorr" 
+because it was the only variable of the two that was included in the codebook where TRUE=Accurate response 
+and FALSE=Error. But we still don't know what "CorrResp" is and whether or not they used it in the analyses.
+
+**Unclear recoding of variables**
+
+In the data file, there is 1 excel file per participant with all of their reaction times to the 250 trials. 
+For some participants, the Prime was coded as the actual prime shown "O", "T", or "M". For other participants, 
+the Prime was coded as "2", "4", and "8". However, we had to infer which number corresponded to each letter by 
+looking at the variables names assigned to trial type and which cue followed ("stay_2", "stay_4", "swt_2", "swt_8"). 
+We coded 2=O, 4=T, 8=M, but still unsure whether these are consistent with how the authors coded the prime variable.
+
+Also, it is unclear how "RespCorr" is coded - does "TRUE" reflect an accurate response for all blocks? The authors 
+noted that for the first 50 trials, responses just had to be correct to be considered an accurate response. 
+Thereafter, responses had to be both correct and fast (accurate but slow responses would be considered an error),
+with the threshold for speed placed at the 60th percentile for that participants' responses on the first 50 trials. 
+We did not calculate the 60th percentile threshold to see if the "RespCorr" was coded correctly, though we did 
+yield the same accuracy rates between switch and repeat trials.
+
+**Ambiguity between using means or medians**
+
+The authors noted that unless otherwise noted, statistical tests were performed on median values rather than mean 
+values. We followed this according to the paper's protocol. However, we're not able to reproduce the following 
+findings using either means or medians for the following findings:
+
+* "performance on switch trials, relative to repeat trials, incurred a switch cost that was evident in longer RTs (836 vs. 689 ms)"
+        
+* "mean RT - predictive cue: 819 ms; 95% confidence interval, or CI = [19.5, 84.4], two-tailed paired t(20) = 3.34, p < .01"
+        
+**Unclear whether descriptives of means/medians of means/medians of individuals, or means/medians across all trials**
+
+This point was perhaps the most frustrating in analyzing reaction time. When we tried to reproduce reaction time medians, we realized that  
+the value could have been obtained by calculating a value (mean or median) for each individual, then summarizing those 
+values to one value (mean or median), OR it could have been obtained by a value (mean or median) across ALL trials. We 
+tried a host of combinations of means or medians with across individuals or across trials, and still could not
+replicate the descriptive reaction times.
+
+**Exclusion Criteria**
+
+What data points did the author's exclude? It is not clear after reading this paragraph:
+
+>If participants were able to learn the predictive value of the cue that preceded only switch 
+trials and could instantiate relevant anticipatory control in response to it,
+
+We don't know how the autor's operationalized "learning the predictive value". Does that mean 
+excluding trials with incorrect responses? Excluding participants with too many incorrect responses?
+Neither the codebook nor the paper provided sufficient information to account for this statement.
+
+------------------
+
+
+
+```{r session_info, include=TRUE, echo=TRUE, results='markup'}
+devtools::session_info()
+```
