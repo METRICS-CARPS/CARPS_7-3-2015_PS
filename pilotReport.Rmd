@@ -15,7 +15,7 @@ output:
 -------
 
 #### Methods summary: 
-Participants (N=21) performed switch trials and repeat trials and were presented unconcious cues. Unconscious cues were followed by a mask (X) and included letters "O" (non-predictive cue), "M" (switch predictive cue), and "T" (repeat predictive cue). One task was to choose the larger value of two values if surrounded by a green box. The other task was to choose the value with the larger font if surrounded by a blue box. Switch trials were trials alternating green and blue boxes. Reaction times and performance accuracy of switch and repeat trials are compared.
+Participants (N=21) completed a series of trials that required them to switch or stay from one task to the other. One task was to choose the larger value of the two values if surrounded by a green box. The other task was to choose the value with the larger font if surrounded by a blue box. Subliminal cues followed by a mask were presented before each trial. Cues included "O", a non-predictive cue, "M", a switch predictive cue, and "T", a repeat predictive cue. Reaction times and performance accuracy was measured.
 
 ------
 
@@ -97,7 +97,7 @@ data$Prime <- recode(data$Prime, '2' = "O", '4' = "T", '8' = "M")
 
 #recode variables to make referencing easier
 data$Prime <- recode(data$Prime, 'O' = "Nonpredictive Cue", 'M' = "Switch Predictive Cue", 'T' = "Repeat Predictive Cue")
-data$TrialType <- recode(data$TrialType, '0' = "Repeat Trials", '1' = "Repeat Trials", '2' = "Switch Trials")
+data$TrialType <- recode(data$TrialType, '0' = "Neither", '1' = "Repeat Trials", '2' = "Switch Trials")
 
 
 ```
