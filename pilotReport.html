@@ -236,7 +236,7 @@ div.tocify {
 </div>
 <div id="methods-summary" class="section level4">
 <h4>Methods summary:</h4>
-<p>Participants (N=21) performed switch trials and repeat trials and were presented with subliminal cues. Subliminal cues were followed by a mask (X) and included letters “O” (non-predictive cue), “M” (switch predictive cue), and “T” (repeat predictive cue). One task was to choose the larger value of two values if surrounded by a green box. The other task was to choose the value with the larger font if surrounded by a blue box. Switch trials were trials alternating green and blue boxes. Reaction times and performance accuracy of switch and repeat trials are compared.</p>
+<p>Participants (N=21) completed a series of trials that required them to switch or stay from one task to the other. One task was to choose the larger value of the two values if surrounded by a green box. The other task was to choose the value with the larger font if surrounded by a blue box. Subliminal cues followed by a mask were presented before each trial. Cues included “O” (non-predictive cue), “M” (switch predictive cue), and “T” (repeat predictive cue). Reaction times and performance accuracy were measured.</p>
 <hr />
 </div>
 <div id="target-outcomes" class="section level4">
@@ -301,7 +301,7 @@ data$TrialType &lt;- recode(data$TrialType, '0' = &quot;Neither&quot;, '1' = &qu
         group_by(TrialType) %&gt;% 
         summarise(median_RT = median(RT))
 
-kable(med_RT)</code></pre>
+kable(med_RT[-1, ])</code></pre>
 <table>
 <thead>
 <tr class="header">
@@ -311,14 +311,10 @@ kable(med_RT)</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">Neither</td>
-<td align="right">1027.7852</td>
-</tr>
-<tr class="even">
 <td align="left">Repeat Trials</td>
 <td align="right">665.0625</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">Switch Trials</td>
 <td align="right">812.9375</td>
 </tr>
@@ -339,7 +335,7 @@ kable(med_RT)</code></pre>
         group_by(TrialType) %&gt;%
         summarise(accuracy = mean(RespCorr))
 
-kable(mean_RespCorr)</code></pre>
+kable(mean_RespCorr[-1, ])</code></pre>
 <table>
 <thead>
 <tr class="header">
@@ -349,14 +345,10 @@ kable(mean_RespCorr)</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">Neither</td>
-<td align="right">0.8333333</td>
-</tr>
-<tr class="even">
 <td align="left">Repeat Trials</td>
 <td align="right">0.9137196</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">Switch Trials</td>
 <td align="right">0.7919738</td>
 </tr>
@@ -402,7 +394,7 @@ kable(mean_Prime_RT)</code></pre>
 <blockquote>
 <p>However, error rates did not differ across these two groups of switch trials (predictive cue: 78.9%; nonpredictive cue: 78.8%)</p>
 </blockquote>
-<p>Again, we will asssume that the accuracy statstic was calculated from the mean of each individual participant’s accuracy.</p>
+<p>Again, we will asssume that the accuracy statistic was calculated from the mean of each individual participant’s accuracy.</p>
 <pre class="r"><code>mean_Prime_RespCorr_Ind &lt;- data %&gt;% filter(TrialType == &quot;Switch Trials&quot;) %&gt;% group_by(id, Prime) %&gt;% summarise(meanCorr = mean(RespCorr)) #Individual Means
 mean_Prime_RespCorr &lt;- mean_Prime_RespCorr_Ind %&gt;% group_by(Prime) %&gt;% summarise(grandmeanCorr = mean(meanCorr)) #Grand Means
 
@@ -433,7 +425,7 @@ kable(mean_Prime_RespCorr)</code></pre>
 </div>
 <div id="inferential-statistics" class="section level3">
 <h3>Inferential statistics</h3>
-<p>The first claim is that in switch trials, predictive cues lead to statsitically significant faster reaction times than nonpredictive cues.</p>
+<p>The first claim is that in switch trials, predictive cues lead to statistically significant faster reaction times than nonpredictive cues.</p>
 <blockquote>
 <p>… the performance on switch trials preceded by this cue would be better than on switch trials preceded by the nonpredictive cue. This was indeed the case (mean RT-predictive cue: 819 ms; nonpredictive cue: 871 ms; mean difference = 52 ms, 95% confidence interval, or CI = [19.5, 84.4]), two-tailed paired t(20) = 3.34, p &lt; .01.</p>
 </blockquote>
@@ -506,7 +498,7 @@ kable(tidy(test))</code></pre>
 </tr>
 </tbody>
 </table>
-<p>Although still insigificant, the p value is very different from what was reported.</p>
+<p>Although still insignificant, the p value is very different from what was reported.</p>
 <pre class="r"><code>compareValues(reportedValue = .8, obtained = .2945, isP = T)</code></pre>
 <pre><code>## [1] &quot;MAJOR NUMERICAL ERROR. The reported value (0.8) and the obtained value (0.3) differed by 62.5%. NB obtained value was rounded to 1 decimal places.&quot;</code></pre>
 </div>
@@ -554,14 +546,13 @@ kable(tidy(test))</code></pre>
 <li><p>“mean RT - predictive cue: 819 ms; 95% confidence interval, or CI = [19.5, 84.4], two-tailed paired t(20) = 3.34, p &lt; .01”</p></li>
 </ul>
 <p><strong>Unclear whether descriptives of means/medians of means/medians of individuals, or means/medians across all trials</strong></p>
-<p>This point was perhaps the most frustrating in analyzing reaction time. When we tried to reproduce reaction time medians, we realized that<br />
-the value could have been obtained by calculating a value (mean or median) for each individual, then summarizing those values to one value (mean or median), OR it could have been obtained by a value (mean or median) across ALL trials. We tried a host of combinations of means or medians with across individuals or across trials, and still could not replicate the descriptive reaction times.</p>
+<p>This point was perhaps the most frustrating in analyzing reaction time. When we tried to reproduce reaction time medians, we realized that the value could have been obtained by calculating a value (mean or median) for each individual, then summarizing those values to one value (mean or median), OR it could have been obtained by a value (mean or median) across ALL trials. We tried a host of combinations of means or medians with across individuals or across trials, and still could not replicate the descriptive reaction times.</p>
 <p><strong>Exclusion Criteria</strong></p>
 <p>What data points did the author’s exclude? It is not clear after reading this paragraph:</p>
 <blockquote>
 <p>If participants were able to learn the predictive value of the cue that preceded only switch trials and could instantiate relevant anticipatory control in response to it,</p>
 </blockquote>
-<p>We don’t know how the autor’s operationalized “learning the predictive value”. Does that mean excluding trials with incorrect responses? Excluding participants with too many incorrect responses? Neither the codebook nor the paper provided sufficient information to account for this statement.</p>
+<p>We don’t know how the author’s operationalized “learning the predictive value”. Does that mean excluding trials with incorrect responses? Excluding participants with too many incorrect responses? Neither the codebook nor the paper provided sufficient information to account for this statement.</p>
 <hr />
 <pre class="r"><code>devtools::session_info()</code></pre>
 <pre><code>##  setting  value                       
@@ -571,7 +562,7 @@ the value could have been obtained by calculating a value (mean or median) for e
 ##  language (EN)                        
 ##  collate  English_United States.1252  
 ##  tz       America/Los_Angeles         
-##  date     2017-11-04                  
+##  date     2017-11-05                  
 ## 
 ##  package      * version date      
 ##  assertthat     0.2.0   2017-04-11

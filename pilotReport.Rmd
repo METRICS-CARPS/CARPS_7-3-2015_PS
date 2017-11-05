@@ -15,7 +15,7 @@ output:
 -------
 
 #### Methods summary: 
-Participants (N=21) completed a series of trials that required them to switch or stay from one task to the other. One task was to choose the larger value of the two values if surrounded by a green box. The other task was to choose the value with the larger font if surrounded by a blue box. Subliminal cues followed by a mask were presented before each trial. Cues included "O", a non-predictive cue, "M", a switch predictive cue, and "T", a repeat predictive cue. Reaction times and performance accuracy was measured.
+Participants (N=21) completed a series of trials that required them to switch or stay from one task to the other. One task was to choose the larger value of the two values if surrounded by a green box. The other task was to choose the value with the larger font if surrounded by a blue box. Subliminal cues followed by a mask were presented before each trial. Cues included "O" (non-predictive cue), "M" (switch predictive cue), and "T" (repeat predictive cue). Reaction times and performance accuracy were measured.
 
 ------
 
@@ -117,7 +117,7 @@ med_RT <- data %>%
         group_by(TrialType) %>% 
         summarise(median_RT = median(RT))
 
-kable(med_RT)
+kable(med_RT[-1, ])
 
 ```
 
@@ -145,7 +145,7 @@ mean_RespCorr <- data %>%
         group_by(TrialType) %>%
         summarise(accuracy = mean(RespCorr))
 
-kable(mean_RespCorr)
+kable(mean_RespCorr[-1, ])
 
 
 ```
@@ -185,7 +185,7 @@ Next we will try to reproduce accuracy of switch predicitve cues vs switch nonpr
 > However, error rates did not differ across these two 
 groups of switch trials (predictive cue: 78.9%; nonpredictive cue: 78.8%)
 
-Again, we will asssume that the accuracy statstic was calculated from the mean of each individual participant's accuracy.
+Again, we will asssume that the accuracy statistic was calculated from the mean of each individual participant's accuracy.
 
 ```{r Prime Accuracy}
 mean_Prime_RespCorr_Ind <- data %>% filter(TrialType == "Switch Trials") %>% group_by(id, Prime) %>% summarise(meanCorr = mean(RespCorr)) #Individual Means
@@ -204,7 +204,7 @@ compareValues(reported = .788, obtained = .7803, isP = F)
 
 ### Inferential statistics
 
-The first claim is that in switch trials, predictive cues lead to statsitically significant faster reaction times 
+The first claim is that in switch trials, predictive cues lead to statistically significant faster reaction times 
 than nonpredictive cues.
 
 > ... the performance on switch trials preceded by this cue would be
@@ -243,7 +243,7 @@ test <- t.test(mean_Prime_RespCorr_Ind[['Nonpredictive Cue']], mean_Prime_RespCo
 kable(tidy(test))
 ```
 
-Although still insigificant, the p value is very different from what was reported.
+Although still insignificant, the p value is very different from what was reported.
 
 ```{r mean Prime accuracy test diff}
 compareValues(reportedValue = .8, obtained = .2945, isP = T)
@@ -299,8 +299,7 @@ findings using either means or medians for the following findings:
         
 **Unclear whether descriptives of means/medians of means/medians of individuals, or means/medians across all trials**
 
-This point was perhaps the most frustrating in analyzing reaction time. When we tried to reproduce reaction time medians, we realized that  
-the value could have been obtained by calculating a value (mean or median) for each individual, then summarizing those 
+This point was perhaps the most frustrating in analyzing reaction time. When we tried to reproduce reaction time medians, we realized that the value could have been obtained by calculating a value (mean or median) for each individual, then summarizing those 
 values to one value (mean or median), OR it could have been obtained by a value (mean or median) across ALL trials. We 
 tried a host of combinations of means or medians with across individuals or across trials, and still could not
 replicate the descriptive reaction times.
@@ -312,7 +311,7 @@ What data points did the author's exclude? It is not clear after reading this pa
 >If participants were able to learn the predictive value of the cue that preceded only switch 
 trials and could instantiate relevant anticipatory control in response to it,
 
-We don't know how the autor's operationalized "learning the predictive value". Does that mean 
+We don't know how the author's operationalized "learning the predictive value". Does that mean 
 excluding trials with incorrect responses? Excluding participants with too many incorrect responses?
 Neither the codebook nor the paper provided sufficient information to account for this statement.
 
