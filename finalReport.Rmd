@@ -10,11 +10,11 @@ output:
 articleID <- "7-3-2015_PS" # insert the article ID code here e.g., "10-3-2015_PS"
 reportType <- 'pilot'
 pilotNames <- "Danielle Boles, Michael Ko" # insert the pilot's name here e.g., "Tom Hardwicke". If there are multiple pilots enter both names in a character string e.g., "Tom Hardwicke, Bob Dylan"
-copilotNames <- "" # insert the co-pilot's name here e.g., "Michael Frank". If there are multiple co-pilots enter both names in a character string e.g., "Tom Hardwicke, Bob Dylan"
+copilotNames <- "Ben Peloquin" # insert the co-pilot's name here e.g., "Michael Frank". If there are multiple co-pilots enter both names in a character string e.g., "Tom Hardwicke, Bob Dylan"
 pilotTTC <- 150 # insert the pilot's estimated time to complete (in minutes, fine to approximate) e.g., 120
 copilotTTC <- NA # insert the co- pilot's estimated time to complete (in minutes, fine to approximate) e.g., 120
 pilotStartDate <- as.Date("10/27/17", format = "%m/%d/%y") # insert the pilot's start date in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
-copilotStartDate <- as.Date("", format = "%m/%d/%y") # insert the co-pilot's start date in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
+copilotStartDate <- as.Date("06/13/18", format = "%m/%d/%y") # insert the co-pilot's start date in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
 completionDate <- as.Date("", format = "%m/%d/%y") # copilot insert the date of final report completion (after any necessary rounds of author assistance) in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
 ```
 
@@ -81,6 +81,16 @@ for (file in files){
 }
 ```
 
+```{r bp-load-codebook, echo=FALSE}
+code_book_path <- 'data/Experiment 1/Codebook.xls'
+d_codebook <- read_xls(code_book_path, col_names=FALSE) # Note that 2, 4, 8 aren't listed in codebook for Primes
+```
+
+```{r bp-check-num-participants, echo=FALSE}
+assertthat::are_equal(length(unique(data$id)), 21)
+```
+
+
 ## Step 3: Tidy data
 
 Each row is an observation. The data is already in tidy.
@@ -98,15 +108,45 @@ The codebook for Experiment 1 listed O, T, and M as the only primes that they us
 We inferred that 2 is the nonpredictive cue, 4 is the repeat predictive cue and 8 as the switch predictive cue based on how the other columns were named. 
 Thus we will proceed the analysis with this assumption by recoding the primes this way.
 
+```{r bp-check-prime-codes, echo=FALSE, eval=FALSE}
+data %>% select(Block_Number) %>% unique
+
+
+number_prime_ids <- data %>% 
+  filter(Prime %in% c(2, 4, 8)) %>%
+  select(id) %>%
+  unique
+
+letter_prime_ids <- data %>% 
+  filter(Prime %in% c('O', 'M', 'T')) %>%
+  select(id) %>% 
+  unique
+
+# One person seems to have seen both???
+intersect(number_prime_ids$id, letter_prime_ids$id)
+
+
+# Occurences of numbered primes...
+data %>%
+  filter(Prime %in% c(2, 4, 8)) %>%
+  select(Event_Number) %>%
+  group_by(Event_Number) %>%
+  summarise(cnt=n()) %>%
+  ggplot(aes(x=Event_Number, y=cnt)) +
+    geom_bar(stat='identity')
+```
+
 ```{r recode}
+data$originalPrime <- data$Prime
 data$Prime <- recode(data$Prime, '2' = "O", '4' = "T", '8' = "M")
 
 #recode variables to make referencing easier
+data$originalTrialType <- data$TrialType
 data$Prime <- recode(data$Prime, 'O' = "Nonpredictive Cue", 'M' = "Switch Predictive Cue", 'T' = "Repeat Predictive Cue")
 data$TrialType <- recode(data$TrialType, '0' = "Neither", '1' = "Repeat Trials", '2' = "Switch Trials")
-
-
 ```
+
+**Note**: `TrialType=0` is not listed in codebook.
 
 ### Descriptive statistics
 
@@ -121,11 +161,21 @@ We used median as the author's instructed to use median for reaction time unless
 ```{r median_RT}
 med_RT <- data %>% 
         group_by(TrialType) %>% 
-        summarise(median_RT = median(RT))
+        summarise(median_RT = median(RT),
+                  mean_RT=mean(RT))
 
 kable(med_RT[-1, ])
+```
+
+```{r bp-check-RTs-filtered-on-OMT, echo=FALSE, eval=FALSE}
+data %>% 
+  filter(originalPrime %in% c("O", "M", "T")) %>%
+  group_by(TrialType) %>% 
+  summarise(median_RT = median(RT),
+            n=n())
 
 ```
+
 
 These values are slightly off. There is ambiguity in how to calculate this statistics which is detailed below. 
 
@@ -151,11 +201,21 @@ mean_RespCorr <- data %>%
         summarise(accuracy = mean(RespCorr))
 
 kable(mean_RespCorr[-1, ])
-
-
 ```
 
-These values match.
+```{r bp-check-CorrResp, echo=FALSE}
+# TODO (BP): What is CorrResp
+mean_CorrResp <- data %>% 
+        group_by(TrialType) %>%
+        summarise(accuracyCorrResp = mean(CorrResp))
+```
+
+```{r mean_acc diff}
+reportObject <- reproCheck(reportedValue = "0.79", obtained = 0.7919738 , valueType = 'mean')
+reportObject <- reproCheck(reportedValue = "0.92", obtained = 0.9137196, valueType = 'mean')
+```
+
+Minor error: These values are extremeley close although rounding mean for accuracy repeat accuracy is slightly different.
 
 --------------------
 
@@ -168,19 +228,40 @@ Later the authors do a t test with 20 as the degrees of freedoms. So we will
 assume that these mean values come from individual medians of RT.
 
 ```{r mean Prime RT}
-mean_Prime_RT_Ind <- data %>% filter(TrialType == "Switch Trials") %>% group_by(id, Prime) %>%summarise(meanRT = mean(RT)) #Individual Means
-mean_Prime_RT <- mean_Prime_RT_Ind %>% group_by(Prime) %>% summarise(grandmeanRT = mean(meanRT)) #Grand Means
+mean_Prime_RT_Ind <- data %>% 
+  filter(TrialType == "Switch Trials") %>% 
+  group_by(id, Prime) %>% 
+  summarise(meanRT = mean(RT),
+            medianRT = median(RT)) #Individual Means
+mean_Prime_RT <- mean_Prime_RT_Ind %>% group_by(Prime) %>% 
+  summarise(grandmeanRT = mean(meanRT),
+            grandMedianRT = median(medianRT)) #Grand Means
 
 kable(mean_Prime_RT)
 ```
 
-These numbers doesn't match. There is ambiguity on how to calculate this statstic which is detailed below.
+These numbers don't match. 
 
 [INSUFFICIENT INFORMATION ERROR]
 
 ```{r mean Prime RT diff}
 reportObject <- reproCheck(reportedValue = "819", obtained = 883.4, valueType = 'mean')
 reportObject <- reproCheck(reportedValue = "871", obtained = 907.8, valueType = 'mean')
+```
+
+```{r bp-check-switch-times, echo=FALSE, eval=FALSE}
+# Check coding of `prime` type. No difference when we filter on lettered primes (e.g. `Prime = O, M, T`). We do se a difference filtering on `Prime = 2, 4, 8`...
+
+# Filter with original prime (O, M, T)
+data %>% 
+  mutate(prime_code_type=ifelse(originalPrime %in% c("O", "M", "T"), 'letters', 'numbers')) %>%
+  filter(TrialType == "Switch Trials") %>% 
+  group_by(id, prime_code_type, originalPrime) %>% 
+  summarise(meanRT = mean(RT),
+            medianRT = median(RT)) %>% 
+  group_by(prime_code_type, originalPrime) %>% 
+  summarise(grandmeanRT = mean(meanRT),
+            grandMedianRT=median(medianRT)) #Grand Means
 ```
 
 ---------------------------
@@ -199,8 +280,21 @@ mean_Prime_RespCorr <- mean_Prime_RespCorr_Ind %>% group_by(Prime) %>% summarise
 kable(mean_Prime_RespCorr)
 ```
 
-These numbers are very close to the reported numbers. The difference is 
-probably due to rounding. We will note this difference anyways.
+```{r bp-check-prime-accuracy, echo=FALSE, eval=FALSE}
+df_accuracy <- data %>% 
+  filter(TrialType == "Switch Trials") %>% 
+  mutate(prime_coding=ifelse(originalPrime %in% c(2, 4, 6), 'numbers', 'letters')) %>%
+  group_by(prime_coding, id, originalPrime) %>% 
+  summarise(meanCorr = mean(RespCorr)) #Individual Means
+
+df_accuracy %>%
+  group_by(originalPrime) %>% 
+  summarise(grandmeanCorr = mean(meanCorr)) #Grand
+
+```
+
+
+These numbers are fairly close to the reported numbers. 
 
 ```{r Prime Accuracy Diff}
 reportObject <- reproCheck(reported = ".789", obtained = .7994, valueType = 'mean')
@@ -220,15 +314,34 @@ cue: 819 ms; nonpredictive cue: 871 ms; mean difference
 84.4]), two-tailed paired t(20) = 3.34, p < .01.
 
 ```{r Prime RT test}
-mean_Prime_RT_Ind <- mean_Prime_RT_Ind %>% spread(Prime, meanRT) #spreading so that the cues are easier to compare
-test <- t.test(mean_Prime_RT_Ind[['Nonpredictive Cue']], mean_Prime_RT_Ind[['Switch Predictive Cue']], paired = T) 
+mean_Prime_RT_Ind <- mean_Prime_RT_Ind %>% select(id, Prime, meanRT) %>%
+  spread(Prime, meanRT) #spreading so that the cues are easier to compare
+test <- t.test(mean_Prime_RT_Ind[['Nonpredictive Cue']], mean_Prime_RT_Ind[['Switch Predictive Cue']], paired = TRUE) 
 
 kable(tidy(test))
 ```
 
+
+
 We do not find the same p value as the original paper. There is ambiguity in how to calculate this statistic which is detailed below.
 
 [INSUFFICIENT INFORMATION ERROR]
+
+**Check** - note that differences in reaction time are quite different a function of `Prime` coding. This just supports the notion that we need to better understand the coding differences before trying to reproduce all the analyses.
+
+```{r bp-prime-rt-ttest}
+# Differences in reaction time t.test by prime coding
+df_rt_ttest <- data %>% 
+  filter(TrialType == "Switch Trials") %>% 
+  group_by(id, originalPrime) %>% 
+  summarise(meanRT = mean(RT)) %>%
+  spread(originalPrime, meanRT)
+
+test1 <- t.test(df_rt_ttest$M, df_rt_ttest$O, paired=TRUE)
+test2 <- t.test(df_rt_ttest$`2`, df_rt_ttest$`8`, paired=TRUE)
+kable(tidy(test1))
+kable(tidy(test2))
+```
 
 -----------------
 
@@ -238,11 +351,24 @@ Next we will test their second claim.
 switch trials (predictive cue: 78.9%; nonpredictive cue: 78.8%), p = .8.
 
 ```{r mean Prime accuracy test}
-mean_Prime_RespCorr_Ind <- mean_Prime_RespCorr_Ind %>% spread(Prime, meanCorr) #spreading so that the cues are easier to compare
-test <- t.test(mean_Prime_RespCorr_Ind[['Nonpredictive Cue']], mean_Prime_RespCorr_Ind[['Switch Predictive Cue']], paired = TRUE)
+mean_Prime_RespCorr_Ind <- 
+  mean_Prime_RespCorr_Ind %>% 
+  spread(Prime, meanCorr) #spreading so that the cues are easier to compare
+test <- 
+  t.test(mean_Prime_RespCorr_Ind[['Nonpredictive Cue']], 
+         mean_Prime_RespCorr_Ind[['Switch Predictive Cue']], paired = TRUE)
 
 kable(tidy(test))
 ```
+
+```{r bp-check-prime-accraucy-ttest, echo=FALSE}
+mean_Prime_RespCorr_Ind %>%
+  ungroup() %>%
+  summarise(nonPredMean=mean(`Nonpredictive Cue`), 
+            predMean=mean(`Switch Predictive Cue`))
+
+```
+
 
 Although still insignificant, the p value is very different from what was reported.
 
@@ -267,7 +393,7 @@ In the data file, there is 1 excel file per participant with all of their reacti
 For some participants, the Prime was coded as the actual prime shown "O", "T", or "M". For other participants, 
 the Prime was coded as "2", "4", and "8". However, we had to infer which number corresponded to each letter by 
 looking at the variables names assigned to trial type and which cue followed ("stay_2", "stay_4", "swt_2", "swt_8"). 
-We coded 2=O, 4=T, 8=M, but still unsure whether these are consistent with how the authors coded the prime variable.
+We coded 2=O, 4=T, 8=M, but still unsure whether these are consistent with how the authors coded the prime variable. We should note that some differences do seem exaggerated while subsetting by these two coding schemes -- data that received a prime coding `Prime in c(2, 4, 8)` appeared to have larger `RT` and `Acc` differences compared to those coded with `Prime in c("O", "T", "M")`.
 
 Also, it is unclear how "RespCorr" is coded - does "TRUE" reflect an accurate response for all blocks? The authors 
 noted that for the first 50 trials, responses just had to be correct to be considered an accurate response. 
@@ -311,13 +437,13 @@ Insufficient_Information_Errors <- 3 # how many discrete insufficient informatio
 
 # Assess the causal locus (discrete reproducibility issues) of any reproducibility errors. Note that there doesn't necessarily have to be a one-to-one correspondance between discrete reproducibility issues and reproducibility errors. For example, it could be that the original article neglects to mention that a Greenhouse-Geisser correct was applied to ANOVA outcomes. This might result in multiple reproducibility errors, but there is a single causal locus (discrete reproducibility issue).
 
-locus_typo <- NA # how many discrete issues did you encounter that related to typographical errors?
-locus_specification <- NA # how many discrete issues did you encounter that related to incomplete, incorrect, or unclear specification of the original analyses?
-locus_analysis <- NA # how many discrete issues did you encounter that related to errors in the authors' original analyses?
-locus_data <- NA # how many discrete issues did you encounter that related to errors in the data files shared by the authors?
-locus_unidentified <- NA # how many discrete issues were there for which you could not identify the cause
+locus_typo <- 0 # how many discrete issues did you encounter that related to typographical errors?
+locus_specification <- 1 # how many discrete issues did you encounter that related to incomplete, incorrect, or unclear specification of the original analyses?
+locus_analysis <- 0 # how many discrete issues did you encounter that related to errors in the authors' original analyses?
+locus_data <- 0 # how many discrete issues did you encounter that related to errors in the data files shared by the authors?
+locus_unidentified <- 3 # how many discrete issues were there for which you could not identify the cause
 
-Affects_Conclusion <- NA # Do any reproducibility issues encounter appear to affect the conclusions made in the original article? This is a subjective judgement, but you should taking into account multiple factors, such as the presence/absence of decision errors, the number of target outcomes that could not be reproduced, the type of outcomes that could or could not be reproduced, the difference in magnitude of effect sizes, and the predictions of the specific hypothesis under scrutiny.
+Affects_Conclusion <- TRUE # Do any reproducibility issues encounter appear to affect the conclusions made in the original article? This is a subjective judgement, but you should taking into account multiple factors, such as the presence/absence of decision errors, the number of target outcomes that could not be reproduced, the type of outcomes that could or could not be reproduced, the difference in magnitude of effect sizes, and the predictions of the specific hypothesis under scrutiny.
 ```
 
 ```{r}
