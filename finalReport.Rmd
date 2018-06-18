@@ -26,18 +26,7 @@ Participants (N=21) completed a series of trials that required them to switch or
 ------
 
 #### Target outcomes: 
-> Performance on switch trials, relative to repeat trials, incurred a switch cost that was evident in longer RTs (836
-vs. 689 ms) and lower accuracy rates (79% vs. 92%). If
-participants were able to learn the predictive value of the
-cue that preceded only switch trials and could instantiate
-relevant anticipatory control in response to it, the performance
-on switch trials preceded by this cue would be
-better than on switch trials preceded by the nonpredictive
-cue. This was indeed the case (mean RT-predictive
-cue: 819 ms; nonpredictive cue: 871 ms; mean difference
-= 52 ms, 95% confidence interval, or CI = [19.5,
-84.4]), two-tailed paired t(20) = 3.34, p < .01. However,
-error rates did not differ across these two groups of switch trials (predictive cue: 78.9%; nonpredictive cue: 78.8%), p = .8.
+> Performance on switch trials, relative to repeat trials, incurred a switch cost that was evident in longer RTs (836 vs. 689 ms) and lower accuracy rates (79% vs. 92%). If participants were able to learn the predictive value of the cue that preceded only switch trials and could instantiate relevant anticipatory control in response to it, the performance on switch trials preceded by this cue would be better than on switch trials preceded by the nonpredictive cue. This was indeed the case (mean RT-predictive cue: 819 ms; nonpredictive cue: 871 ms; mean difference = 52 ms, 95% confidence interval, or CI = [19.5, 84.4]), two-tailed paired t(20) = 3.34, p < .01. However, error rates did not differ across these two groups of switch trials (predictive cue: 78.9%; nonpredictive cue: 78.8%), p = .8.
 
 ------
 
@@ -64,7 +53,7 @@ reportObject <- data.frame(dummyRow = TRUE, reportedValue = NA, obtainedValue = 
 ## Step 2: Load data
 
 ```{r warning=FALSE}
-# This reads all the particiapnts data (each is in a seperase xls file) in and combines them into one dataframe
+# This reads all the particiapnts data (each is in a seperate xls file) in and combines them into one dataframe
 # Each xls has 250 rows, the rest is their calculations using excel, which we don't want in the data
 files <- dir('data/Experiment 1')
 
@@ -86,6 +75,8 @@ code_book_path <- 'data/Experiment 1/Codebook.xls'
 d_codebook <- read_xls(code_book_path, col_names=FALSE) # Note that 2, 4, 8 aren't listed in codebook for Primes
 ```
 
+Do we have data from 21 participants as expected?
+
 ```{r bp-check-num-participants, echo=FALSE}
 assertthat::are_equal(length(unique(data$id)), 21)
 ```
@@ -93,25 +84,22 @@ assertthat::are_equal(length(unique(data$id)), 21)
 
 ## Step 3: Tidy data
 
-Each row is an observation. The data is already in tidy.
-
-```{r}
-# each trial is an observation
-# the data is in tidy already
-```
+Each row is an observation. The data is already in tidy format.
 
 ## Step 4: Run analysis
 
 ### Pre-processing
 
 The codebook for Experiment 1 listed O, T, and M as the only primes that they used. However, we found that some participants had primes 2, 4, and 8 instead.
+
 We inferred that 2 is the nonpredictive cue, 4 is the repeat predictive cue and 8 as the switch predictive cue based on how the other columns were named. 
+
 Thus we will proceed the analysis with this assumption by recoding the primes this way.
 
 ```{r bp-check-prime-codes, echo=FALSE, eval=FALSE}
 data %>% select(Block_Number) %>% unique
 
-
+# which participants have primes 2, 4, and 8
 number_prime_ids <- data %>% 
   filter(Prime %in% c(2, 4, 8)) %>%
   select(id) %>%
@@ -150,13 +138,12 @@ data$TrialType <- recode(data$TrialType, '0' = "Neither", '1' = "Repeat Trials",
 
 ### Descriptive statistics
 
-We will first try to reproduce median reaction time of switch trials and non switch trials.
+We will first try to reproduce median reaction time of switch trials and repeat trials.
 
-> Performance on switch trials, relative to repeat trials,
-incurred a switch cost that was evident in longer RTs (836
-vs. 689 ms)
+> Performance on switch trials, relative to repeat trials, incurred a switch cost that was evident in longer RTs (836 vs. 689 ms)
 
-We used median as the author's instructed to use median for reaction time unless otherwise reported.
+We used median as the author's instructed to use median for reaction time unless otherwise reported:
+> unless stated otherwise, the statistical tests were performed on the more stable median values rather than mean values.
 
 ```{r median_RT}
 med_RT <- data %>% 
@@ -168,6 +155,7 @@ kable(med_RT[-1, ])
 ```
 
 ```{r bp-check-RTs-filtered-on-OMT, echo=FALSE, eval=FALSE}
+# here we are checking if only including participants with 'letter' primes enables us to reproduce the target values (it doesn't).
 data %>% 
   filter(originalPrime %in% c("O", "M", "T")) %>%
   group_by(TrialType) %>% 
@@ -177,22 +165,20 @@ data %>%
 ```
 
 
-These values are slightly off. There is ambiguity in how to calculate this statistics which is detailed below. 
+These values are slightly off. There is ambiguity in how to calculate these statistics which is detailed below. 
 
 [INSUFFICIENT INFORMATION ERROR]
 
 ```{r median_RT diff}
-reportObject <- reproCheck(reportedValue = "836", obtained = 812.94, valueType = 'median')
-reportObject <- reproCheck(reportedValue = "689", obtained = 665.06, valueType = 'median')
+reportObject <- reproCheck(reportedValue = "836", obtained = filter(med_RT, TrialType == "Switch Trials")$median_RT, valueType = 'median')
+reportObject <- reproCheck(reportedValue = "689", obtained = filter(med_RT, TrialType == "Repeat Trials")$median_RT, valueType = 'median')
 ```
 
 -----------------
 
-Next we will try to reproduce the accuracy of switch trials and non switch trials.
+Next we will try to reproduce the accuracy of switch trials and repeat trials.
 
-> Performance on switch trials, relative to repeat trials,
-incurred a switch cost that was evident in [...] lower 
-accuracy rates (79% vs. 92%)
+> Performance on switch trials, relative to repeat trials, incurred a switch cost that was evident in [...] lower accuracy rates (79% vs. 92%)
 
 
 ```{r mean_Correct_Response}
@@ -211,8 +197,9 @@ mean_CorrResp <- data %>%
 ```
 
 ```{r mean_acc diff}
-reportObject <- reproCheck(reportedValue = "0.79", obtained = 0.7919738 , valueType = 'mean')
-reportObject <- reproCheck(reportedValue = "0.92", obtained = 0.9137196, valueType = 'mean')
+
+reportObject <- reproCheck(reportedValue = "0.79", obtained = filter(mean_RespCorr, TrialType == "Switch Trials")$accuracy, valueType = 'mean')
+reportObject <- reproCheck(reportedValue = "0.92", obtained = filter(mean_RespCorr, TrialType == "Repeat Trials")$accuracy, valueType = 'mean')
 ```
 
 Minor error: These values are extremeley close although rounding mean for accuracy repeat accuracy is slightly different.
@@ -221,11 +208,9 @@ Minor error: These values are extremeley close although rounding mean for accura
 
 Now we will analyze Predicitve Switch Cues vs Nonpredictive Switch Cues. Let's start with reaction time.
 
-> This was indeed the case (mean RT-predictive
-cue: 819 ms; nonpredictive cue: 871 ms; ... )
+> This was indeed the case (mean RT-predictive cue: 819 ms; nonpredictive cue: 871 ms; ... )
 
-Later the authors do a t test with 20 as the degrees of freedoms. So we will 
-assume that these mean values come from individual medians of RT.
+Later the authors do a t test with 20 as the degrees of freedoms. So we will assume that these mean values come from individual medians of RT.
 
 ```{r mean Prime RT}
 mean_Prime_RT_Ind <- data %>% 
@@ -250,7 +235,7 @@ reportObject <- reproCheck(reportedValue = "871", obtained = 907.8, valueType = 
 ```
 
 ```{r bp-check-switch-times, echo=FALSE, eval=FALSE}
-# Check coding of `prime` type. No difference when we filter on lettered primes (e.g. `Prime = O, M, T`). We do se a difference filtering on `Prime = 2, 4, 8`...
+# Check coding of `prime` type. No difference when we filter on lettered primes (e.g. `Prime = O, M, T`). We do see a difference filtering on `Prime = 2, 4, 8`...
 
 # Filter with original prime (O, M, T)
 data %>% 
@@ -268,8 +253,7 @@ data %>%
 
 Next we will try to reproduce accuracy of switch predicitve cues vs switch nonpredictive cues.
 
-> However, error rates did not differ across these two 
-groups of switch trials (predictive cue: 78.9%; nonpredictive cue: 78.8%)
+> However, error rates did not differ across these two groups of switch trials (predictive cue: 78.9%; nonpredictive cue: 78.8%)
 
 Again, we will asssume that the accuracy statistic was calculated from the mean of each individual participant's accuracy.
 
@@ -306,12 +290,7 @@ reportObject <- reproCheck(reported = ".788", obtained = .7803, valueType = 'mea
 The first claim is that in switch trials, predictive cues lead to statistically significant faster reaction times 
 than nonpredictive cues.
 
-> ... the performance on switch trials preceded by this cue would be
-better than on switch trials preceded by the nonpredictive
-cue. This was indeed the case (mean RT-predictive
-cue: 819 ms; nonpredictive cue: 871 ms; mean difference
-= 52 ms, 95% confidence interval, or CI = [19.5,
-84.4]), two-tailed paired t(20) = 3.34, p < .01.
+> ... the performance on switch trials preceded by this cue would be better than on switch trials preceded by the nonpredictive cue. This was indeed the case (mean RT-predictive cue: 819 ms; nonpredictive cue: 871 ms; mean difference = 52 ms, 95% confidence interval, or CI = [19.5, 84.4]), two-tailed paired t(20) = 3.34, p < .01.
 
 ```{r Prime RT test}
 mean_Prime_RT_Ind <- mean_Prime_RT_Ind %>% select(id, Prime, meanRT) %>%
@@ -345,10 +324,9 @@ kable(tidy(test2))
 
 -----------------
 
-Next we will test their second claim.
+Next we will test the second claim.
 
-> However, error rates did not differ across these two groups of 
-switch trials (predictive cue: 78.9%; nonpredictive cue: 78.8%), p = .8.
+> However, error rates did not differ across these two groups ofswitch trials (predictive cue: 78.9%; nonpredictive cue: 78.8%), p = .8.
 
 ```{r mean Prime accuracy test}
 mean_Prime_RespCorr_Ind <- 
@@ -379,13 +357,13 @@ reportObject <- reproCheck(reportedValue = ".8", obtained = .2945, valueType = '
 
 ## Step 5: Conclusion
 
-This reproducibility check was a failure. Generally, all the reaction time statistics (even the means) were different from what was reported. This failure can be attributed to a number of reasons.
+In our initial attempts we have not been able to reproduce several target outcomes. Generally, all the reaction time statistics (even the means) were different from what was reported. There are a number of possible reasons:
 
-**Poor name choice for variables**
+**Unclear labels for variables**
 
 There is a variable "CorrResp" (1 or 0) and another variable "RespCorr" (TRUE or FALSE). We used "RespCorr" 
 because it was the only variable of the two that was included in the codebook where TRUE=Accurate response 
-and FALSE=Error. But we still don't know what "CorrResp" is and whether or not they used it in the analyses.
+and FALSE=Error. But we still don't know what "CorrResp" is and whether or not it was used in the original analyses.
 
 **Unclear recoding of variables**
 
@@ -404,7 +382,7 @@ yield the same accuracy rates between switch and repeat trials.
 
 **Ambiguity between using means or medians**
 
-The authors noted that unless otherwise noted, statistical tests were performed on median values rather than mean 
+In the article it states that, unless otherwise noted, statistical tests were performed on median values rather than mean 
 values. We followed this according to the paper's protocol. However, we're not able to reproduce the following 
 findings using either means or medians for the following findings:
 
@@ -414,8 +392,7 @@ findings using either means or medians for the following findings:
         
 **Unclear whether descriptives of means/medians of means/medians of individuals, or means/medians across all trials**
 
-This point was perhaps the most frustrating in analyzing reaction time. When we tried to reproduce reaction time medians, we realized that the value could have been obtained by calculating a value (mean or median) for each individual, then summarizing those 
-values to one value (mean or median), OR it could have been obtained by a value (mean or median) across ALL trials. We 
+This point was perhaps the most frustrating in analyzing reaction time. When we tried to reproduce reaction time medians, we realized that the value could have been obtained by calculating a value (mean or median) for each individual, then summarizing those values to one value (mean or median), OR it could have been obtained by a value (mean or median) across ALL trials. We 
 tried a host of combinations of means or medians with across individuals or across trials, and still could not
 replicate the descriptive reaction times.
 
@@ -423,12 +400,9 @@ replicate the descriptive reaction times.
 
 What data points did the author's exclude? It is not clear after reading this paragraph:
 
->If participants were able to learn the predictive value of the cue that preceded only switch 
-trials and could instantiate relevant anticipatory control in response to it,
+>If participants were able to learn the predictive value of the cue that preceded only switch trials and could instantiate relevant anticipatory control in response to it,
 
-We don't know how the author's operationalized "learning the predictive value". Does that mean 
-excluding trials with incorrect responses? Excluding participants with too many incorrect responses?
-Neither the codebook nor the paper provided sufficient information to account for this statement.
+We don't know how the author's operationalized "learning the predictive value". Does that mean  excluding trials with incorrect responses? Excluding participants with too many incorrect responses?  Neither the codebook nor the paper provided sufficient information to enable us to repeat these exclusions.
 
 ```{r}
 Author_Assistance = FALSE # was author assistance provided? (if so, enter TRUE)
@@ -443,6 +417,13 @@ locus_analysis <- 0 # how many discrete issues did you encounter that related to
 locus_data <- 0 # how many discrete issues did you encounter that related to errors in the data files shared by the authors?
 locus_unidentified <- 3 # how many discrete issues were there for which you could not identify the cause
 
+# How many of the above issues were resolved through author assistance?
+locus_typo_resolved <- NA # how many discrete issues did you encounter that related to typographical errors?
+locus_specification_resolved <- NA # how many discrete issues did you encounter that related to incomplete, incorrect, or unclear specification of the original analyses?
+locus_analysis_resolved <- NA # how many discrete issues did you encounter that related to errors in the authors' original analyses?
+locus_data_resolved <- NA # how many discrete issues did you encounter that related to errors in the data files shared by the authors?
+locus_unidentified_resolved <- NA # how many discrete issues were there for which you could not identify the cause
+
 Affects_Conclusion <- TRUE # Do any reproducibility issues encounter appear to affect the conclusions made in the original article? This is a subjective judgement, but you should taking into account multiple factors, such as the presence/absence of decision errors, the number of target outcomes that could not be reproduced, the type of outcomes that could or could not be reproduced, the difference in magnitude of effect sizes, and the predictions of the specific hypothesis under scrutiny.
 ```
 
@@ -454,7 +435,7 @@ reportObject <- reportObject %>%
   select(articleID, everything()) # make articleID first column
 
 # decide on final outcome
-if(any(reportObject$comparisonOutcome != "MATCH") | Insufficient_Information_Errors > 0){
+if(any(reportObject$comparisonOutcome %in% c("MAJOR_ERROR", "DECISION_ERROR")) | Insufficient_Information_Errors > 0){
   finalOutcome <- "Failure without author assistance"
   if(Author_Assistance == T){
     finalOutcome <- "Failure despite author assistance"
@@ -467,7 +448,7 @@ if(any(reportObject$comparisonOutcome != "MATCH") | Insufficient_Information_Err
 }
 
 # collate report extra details
-reportExtras <- data.frame(articleID, pilotNames, copilotNames, pilotTTC, copilotTTC, pilotStartDate, copilotStartDate, completionDate, Author_Assistance, finalOutcome, Insufficient_Information_Errors, locus_typo, locus_specification, locus_analysis, locus_data, locus_unidentified)
+reportExtras <- data.frame(articleID, pilotNames, copilotNames, pilotTTC, copilotTTC, pilotStartDate, copilotStartDate, completionDate, Author_Assistance, finalOutcome, Insufficient_Information_Errors, locus_typo, locus_specification, locus_analysis, locus_data, locus_unidentified, locus_typo_resolved, locus_specification_resolved, locus_analysis_resolved, locus_data_resolved, locus_unidentified_resolved)
 
 # save report objects
 if(reportType == "pilot"){
