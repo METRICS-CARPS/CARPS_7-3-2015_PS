@@ -257,7 +257,7 @@ reportObject &lt;- data.frame(dummyRow = TRUE, reportedValue = NA, obtainedValue
 </div>
 <div id="step-2-load-data" class="section level2">
 <h2>Step 2: Load data</h2>
-<pre class="r"><code># This reads all the particiapnts data (each is in a seperase xls file) in and combines them into one dataframe
+<pre class="r"><code># This reads all the particiapnts data (each is in a seperate xls file) in and combines them into one dataframe
 # Each xls has 250 rows, the rest is their calculations using excel, which we don't want in the data
 files &lt;- dir('data/Experiment 1')
 
@@ -272,19 +272,20 @@ for (file in files){
     data &lt;- rbind(data, temp_data)
   }
 }</code></pre>
+<p>Do we have data from 21 participants as expected?</p>
 <pre><code>## [1] TRUE</code></pre>
 </div>
 <div id="step-3-tidy-data" class="section level2">
 <h2>Step 3: Tidy data</h2>
-<p>Each row is an observation. The data is already in tidy.</p>
-<pre class="r"><code># each trial is an observation
-# the data is in tidy already</code></pre>
+<p>Each row is an observation. The data is already in tidy format.</p>
 </div>
 <div id="step-4-run-analysis" class="section level2">
 <h2>Step 4: Run analysis</h2>
 <div id="pre-processing" class="section level3">
 <h3>Pre-processing</h3>
-<p>The codebook for Experiment 1 listed O, T, and M as the only primes that they used. However, we found that some participants had primes 2, 4, and 8 instead. We inferred that 2 is the nonpredictive cue, 4 is the repeat predictive cue and 8 as the switch predictive cue based on how the other columns were named. Thus we will proceed the analysis with this assumption by recoding the primes this way.</p>
+<p>The codebook for Experiment 1 listed <code>O</code>, <code>T</code>, and <code>M</code> as the only primes that they used. However, we found that some participants had primes <code>2</code>, <code>4</code>, and <code>8</code> instead.</p>
+<p>We inferred that <code>2</code> is the nonpredictive cue, <code>4</code> is the repeat predictive cue and <code>8</code> as the switch predictive cue based on how the other columns were named.</p>
+<p>Thus we will proceed the analysis with this assumption by recoding the primes this way.</p>
 <pre class="r"><code>data$originalPrime &lt;- data$Prime
 data$Prime &lt;- recode(data$Prime, '2' = &quot;O&quot;, '4' = &quot;T&quot;, '8' = &quot;M&quot;)
 
@@ -296,11 +297,11 @@ data$TrialType &lt;- recode(data$TrialType, '0' = &quot;Neither&quot;, '1' = &qu
 </div>
 <div id="descriptive-statistics" class="section level3">
 <h3>Descriptive statistics</h3>
-<p>We will first try to reproduce median reaction time of switch trials and non switch trials.</p>
+<p>We will first try to reproduce median reaction time of switch trials and repeat trials.</p>
 <blockquote>
 <p>Performance on switch trials, relative to repeat trials, incurred a switch cost that was evident in longer RTs (836 vs. 689 ms)</p>
 </blockquote>
-<p>We used median as the author’s instructed to use median for reaction time unless otherwise reported.</p>
+<p>We used median as the author’s instructed to use median for reaction time unless otherwise reported: &gt; unless stated otherwise, the statistical tests were performed on the more stable median values rather than mean values.</p>
 <pre class="r"><code>med_RT &lt;- data %&gt;% 
         group_by(TrialType) %&gt;% 
         summarise(median_RT = median(RT),
@@ -328,14 +329,14 @@ kable(med_RT[-1, ])</code></pre>
 </tr>
 </tbody>
 </table>
-<p>These values are slightly off. There is ambiguity in how to calculate this statistics which is detailed below.</p>
+<p>These values are slightly off. There is ambiguity in how to calculate these statistics which is detailed below.</p>
 <p>[INSUFFICIENT INFORMATION ERROR]</p>
-<pre class="r"><code>reportObject &lt;- reproCheck(reportedValue = &quot;836&quot;, obtained = 812.94, valueType = 'median')</code></pre>
+<pre class="r"><code>reportObject &lt;- reproCheck(reportedValue = &quot;836&quot;, obtained = filter(med_RT, TrialType == &quot;Switch Trials&quot;)$median_RT, valueType = 'median')</code></pre>
 <pre><code>## [1] &quot;MINOR_ERROR for median. The reported value (836) and the obtained value (813) differed by 2.75%. NB obtained value was rounded to 0 decimal places.&quot;</code></pre>
-<pre class="r"><code>reportObject &lt;- reproCheck(reportedValue = &quot;689&quot;, obtained = 665.06, valueType = 'median')</code></pre>
+<pre class="r"><code>reportObject &lt;- reproCheck(reportedValue = &quot;689&quot;, obtained = filter(med_RT, TrialType == &quot;Repeat Trials&quot;)$median_RT, valueType = 'median')</code></pre>
 <pre><code>## [1] &quot;MINOR_ERROR for median. The reported value (689) and the obtained value (665) differed by 3.48%. NB obtained value was rounded to 0 decimal places.&quot;</code></pre>
 <hr />
-<p>Next we will try to reproduce the accuracy of switch trials and non switch trials.</p>
+<p>Next we will try to reproduce the accuracy of switch trials and repeat trials.</p>
 <blockquote>
 <p>Performance on switch trials, relative to repeat trials, incurred a switch cost that was evident in […] lower accuracy rates (79% vs. 92%)</p>
 </blockquote>
@@ -362,9 +363,9 @@ kable(mean_RespCorr[-1, ])</code></pre>
 </tr>
 </tbody>
 </table>
-<pre class="r"><code>reportObject &lt;- reproCheck(reportedValue = &quot;0.79&quot;, obtained = 0.7919738 , valueType = 'mean')</code></pre>
+<pre class="r"><code>reportObject &lt;- reproCheck(reportedValue = &quot;0.79&quot;, obtained = filter(mean_RespCorr, TrialType == &quot;Switch Trials&quot;)$accuracy, valueType = 'mean')</code></pre>
 <pre><code>## [1] &quot;MATCH for mean. The reported value (0.79) and the obtained value (0.79) differed by 0%. NB obtained value was rounded to 2 decimal places.&quot;</code></pre>
-<pre class="r"><code>reportObject &lt;- reproCheck(reportedValue = &quot;0.92&quot;, obtained = 0.9137196, valueType = 'mean')</code></pre>
+<pre class="r"><code>reportObject &lt;- reproCheck(reportedValue = &quot;0.92&quot;, obtained = filter(mean_RespCorr, TrialType == &quot;Repeat Trials&quot;)$accuracy, valueType = 'mean')</code></pre>
 <pre><code>## [1] &quot;MINOR_ERROR for mean. The reported value (0.92) and the obtained value (0.91) differed by 1.09%. NB obtained value was rounded to 2 decimal places.&quot;</code></pre>
 <p>Minor error: These values are extremeley close although rounding mean for accuracy repeat accuracy is slightly different.</p>
 <hr />
@@ -548,9 +549,9 @@ kable(tidy(test1))</code></pre>
 </tbody>
 </table>
 <hr />
-<p>Next we will test their second claim.</p>
+<p>Next we will test the second claim.</p>
 <blockquote>
-<p>However, error rates did not differ across these two groups of switch trials (predictive cue: 78.9%; nonpredictive cue: 78.8%), p = .8.</p>
+<p>However, error rates did not differ across these two groups ofswitch trials (predictive cue: 78.9%; nonpredictive cue: 78.8%), p = .8.</p>
 </blockquote>
 <pre class="r"><code>mean_Prime_RespCorr_Ind &lt;- 
   mean_Prime_RespCorr_Ind %&gt;% 
@@ -597,26 +598,19 @@ kable(tidy(test))</code></pre>
 </div>
 <div id="step-5-conclusion" class="section level2">
 <h2>Step 5: Conclusion</h2>
-<p>This reproducibility check was a failure. Generally, all the reaction time statistics (even the means) were different from what was reported. This failure can be attributed to a number of reasons.</p>
-<p><strong>Poor name choice for variables</strong></p>
-<p>There is a variable “CorrResp” (1 or 0) and another variable “RespCorr” (TRUE or FALSE). We used “RespCorr” because it was the only variable of the two that was included in the codebook where TRUE=Accurate response and FALSE=Error. But we still don’t know what “CorrResp” is and whether or not they used it in the analyses.</p>
+<p>In our initial attempts we have not been able to reproduce several target outcomes. Generally, all the reaction time statistics (even the means) were different from what was reported. There are a number of possible reasons:</p>
+<p><strong>Unclear labels for variables</strong></p>
+<p>There is a variable “CorrResp” (1 or 0) and another variable “RespCorr” (TRUE or FALSE). We used “RespCorr” because it was the only variable of the two that was included in the codebook where TRUE=Accurate response and FALSE=Error. But we still don’t know what “CorrResp” is and whether or not it was used in the original analyses.</p>
 <p><strong>Unclear recoding of variables</strong></p>
 <p>In the data file, there is 1 excel file per participant with all of their reaction times to the 250 trials. For some participants, the Prime was coded as the actual prime shown “O”, “T”, or “M”. For other participants, the Prime was coded as “2”, “4”, and “8”. However, we had to infer which number corresponded to each letter by looking at the variables names assigned to trial type and which cue followed (“stay_2”, “stay_4”, “swt_2”, “swt_8”). We coded 2=O, 4=T, 8=M, but still unsure whether these are consistent with how the authors coded the prime variable. We should note that some differences do seem exaggerated while subsetting by these two coding schemes – data that received a prime coding <code>Prime in c(2, 4, 8)</code> appeared to have larger <code>RT</code> and <code>Acc</code> differences compared to those coded with <code>Prime in c(&quot;O&quot;, &quot;T&quot;, &quot;M&quot;)</code>.</p>
-<p>Also, it is unclear how “RespCorr” is coded - does “TRUE” reflect an accurate response for all blocks? The authors noted that for the first 50 trials, responses just had to be correct to be considered an accurate response. Thereafter, responses had to be both correct and fast (accurate but slow responses would be considered an error), with the threshold for speed placed at the 60th percentile for that participants’ responses on the first 50 trials. We did not calculate the 60th percentile threshold to see if the “RespCorr” was coded correctly, though we did yield the same accuracy rates between switch and repeat trials.</p>
 <p><strong>Ambiguity between using means or medians</strong></p>
-<p>The authors noted that unless otherwise noted, statistical tests were performed on median values rather than mean values. We followed this according to the paper’s protocol. However, we’re not able to reproduce the following findings using either means or medians for the following findings:</p>
+<p>In the article it states that, unless otherwise noted, statistical tests were performed on median values rather than mean values. We followed this according to the paper’s protocol. However, we’re not able to reproduce the following findings using either means or medians for the following findings:</p>
 <ul>
 <li><p>“performance on switch trials, relative to repeat trials, incurred a switch cost that was evident in longer RTs (836 vs. 689 ms)”</p></li>
 <li><p>“mean RT - predictive cue: 819 ms; 95% confidence interval, or CI = [19.5, 84.4], two-tailed paired t(20) = 3.34, p &lt; .01”</p></li>
 </ul>
 <p><strong>Unclear whether descriptives of means/medians of means/medians of individuals, or means/medians across all trials</strong></p>
 <p>This point was perhaps the most frustrating in analyzing reaction time. When we tried to reproduce reaction time medians, we realized that the value could have been obtained by calculating a value (mean or median) for each individual, then summarizing those values to one value (mean or median), OR it could have been obtained by a value (mean or median) across ALL trials. We tried a host of combinations of means or medians with across individuals or across trials, and still could not replicate the descriptive reaction times.</p>
-<p><strong>Exclusion Criteria</strong></p>
-<p>What data points did the author’s exclude? It is not clear after reading this paragraph:</p>
-<blockquote>
-<p>If participants were able to learn the predictive value of the cue that preceded only switch trials and could instantiate relevant anticipatory control in response to it,</p>
-</blockquote>
-<p>We don’t know how the author’s operationalized “learning the predictive value”. Does that mean excluding trials with incorrect responses? Excluding participants with too many incorrect responses? Neither the codebook nor the paper provided sufficient information to account for this statement.</p>
 <pre class="r"><code>Author_Assistance = FALSE # was author assistance provided? (if so, enter TRUE)
 
 Insufficient_Information_Errors &lt;- 3 # how many discrete insufficient information issues did you encounter?
@@ -629,6 +623,13 @@ locus_analysis &lt;- 0 # how many discrete issues did you encounter that related
 locus_data &lt;- 0 # how many discrete issues did you encounter that related to errors in the data files shared by the authors?
 locus_unidentified &lt;- 3 # how many discrete issues were there for which you could not identify the cause
 
+# How many of the above issues were resolved through author assistance?
+locus_typo_resolved &lt;- NA # how many discrete issues did you encounter that related to typographical errors?
+locus_specification_resolved &lt;- NA # how many discrete issues did you encounter that related to incomplete, incorrect, or unclear specification of the original analyses?
+locus_analysis_resolved &lt;- NA # how many discrete issues did you encounter that related to errors in the authors' original analyses?
+locus_data_resolved &lt;- NA # how many discrete issues did you encounter that related to errors in the data files shared by the authors?
+locus_unidentified_resolved &lt;- NA # how many discrete issues were there for which you could not identify the cause
+
 Affects_Conclusion &lt;- TRUE # Do any reproducibility issues encounter appear to affect the conclusions made in the original article? This is a subjective judgement, but you should taking into account multiple factors, such as the presence/absence of decision errors, the number of target outcomes that could not be reproduced, the type of outcomes that could or could not be reproduced, the difference in magnitude of effect sizes, and the predictions of the specific hypothesis under scrutiny.</code></pre>
 <pre class="r"><code>reportObject &lt;- reportObject %&gt;%
   filter(dummyRow == FALSE) %&gt;% # remove the dummy row
@@ -637,7 +638,7 @@ Affects_Conclusion &lt;- TRUE # Do any reproducibility issues encounter appear t
   select(articleID, everything()) # make articleID first column
 
 # decide on final outcome
-if(any(reportObject$comparisonOutcome != &quot;MATCH&quot;) | Insufficient_Information_Errors &gt; 0){
+if(any(reportObject$comparisonOutcome %in% c(&quot;MAJOR_ERROR&quot;, &quot;DECISION_ERROR&quot;)) | Insufficient_Information_Errors &gt; 0){
   finalOutcome &lt;- &quot;Failure without author assistance&quot;
   if(Author_Assistance == T){
     finalOutcome &lt;- &quot;Failure despite author assistance&quot;
@@ -650,7 +651,7 @@ if(any(reportObject$comparisonOutcome != &quot;MATCH&quot;) | Insufficient_Infor
 }
 
 # collate report extra details
-reportExtras &lt;- data.frame(articleID, pilotNames, copilotNames, pilotTTC, copilotTTC, pilotStartDate, copilotStartDate, completionDate, Author_Assistance, finalOutcome, Insufficient_Information_Errors, locus_typo, locus_specification, locus_analysis, locus_data, locus_unidentified)
+reportExtras &lt;- data.frame(articleID, pilotNames, copilotNames, pilotTTC, copilotTTC, pilotStartDate, copilotStartDate, completionDate, Author_Assistance, finalOutcome, Insufficient_Information_Errors, locus_typo, locus_specification, locus_analysis, locus_data, locus_unidentified, locus_typo_resolved, locus_specification_resolved, locus_analysis_resolved, locus_data_resolved, locus_unidentified_resolved)
 
 # save report objects
 if(reportType == &quot;pilot&quot;){
@@ -673,14 +674,14 @@ if(reportType == &quot;final&quot;){
 ##  language (EN)                        
 ##  collate  en_US.UTF-8                 
 ##  tz       &lt;NA&gt;                        
-##  date     2018-06-13                  
+##  date     2018-06-18                  
 ## 
 ##  package      * version date      
 ##  assertthat     0.2.0   2017-04-11
 ##  backports      1.1.2   2017-12-13
 ##  base         * 3.4.1   2017-07-07
-##  bindr          0.1     2016-11-13
-##  bindrcpp     * 0.2     2017-06-17
+##  bindr          0.1.1   2018-03-13
+##  bindrcpp     * 0.2.2   2018-03-29
 ##  broom        * 0.4.2   2017-02-13
 ##  CARPSreports * 0.1     2018-06-13
 ##  cellranger     1.1.0   2016-07-27
@@ -691,7 +692,7 @@ if(reportType == &quot;final&quot;){
 ##  datasets     * 3.4.1   2017-07-07
 ##  devtools       1.13.5  2018-02-18
 ##  digest         0.6.14  2018-01-14
-##  dplyr        * 0.7.4   2017-09-28
+##  dplyr        * 0.7.5   2018-05-19
 ##  evaluate       0.10.1  2017-06-24
 ##  forcats      * 0.2.0   2017-01-23
 ##  foreign        0.8-69  2017-06-22
@@ -709,7 +710,7 @@ if(reportType == &quot;final&quot;){
 ##  jsonlite       1.5     2017-06-01
 ##  knitr        * 1.20    2018-02-20
 ##  lattice        0.20-35 2017-03-25
-##  lazyeval       0.2.0   2016-06-12
+##  lazyeval       0.2.1   2017-10-29
 ##  lubridate      1.7.1   2017-11-03
 ##  magrittr       1.5     2014-11-22
 ##  memoise        1.1.0   2017-04-21
@@ -723,37 +724,37 @@ if(reportType == &quot;final&quot;){
 ##  pkgconfig      2.0.1   2017-03-21
 ##  plyr           1.8.4   2016-06-08
 ##  psych          1.7.8   2017-09-09
-##  purrr        * 0.2.4   2017-10-18
+##  purrr        * 0.2.5   2018-05-29
 ##  R6             2.2.2   2017-06-17
 ##  Rcpp           0.12.17 2018-05-18
 ##  readr        * 1.1.1   2017-05-16
 ##  readxl       * 1.1.0   2018-04-20
 ##  reshape2       1.4.2   2016-10-22
-##  rlang          0.2.0   2018-02-20
+##  rlang          0.2.1   2018-05-30
 ##  rmarkdown      1.9     2018-03-01
 ##  rprojroot      1.3-2   2018-01-03
 ##  rstudioapi     0.7     2017-09-07
 ##  rvest          0.3.2   2016-06-17
 ##  scales         0.5.0   2017-08-24
 ##  stats        * 3.4.1   2017-07-07
-##  stringi        1.1.7   2018-03-12
-##  stringr      * 1.3.0   2018-02-19
+##  stringi        1.2.2   2018-05-02
+##  stringr      * 1.3.1   2018-05-10
 ##  tibble       * 1.4.2   2018-01-22
 ##  tidyr        * 0.7.2   2017-10-16
-##  tidyselect     0.2.2   2017-10-10
+##  tidyselect     0.2.4   2018-02-26
 ##  tidyverse    * 1.2.1   2017-11-14
 ##  tools          3.4.1   2017-07-07
 ##  utf8           1.1.3   2018-01-03
 ##  utils        * 3.4.1   2017-07-07
 ##  withr          2.1.1   2017-12-19
 ##  xml2           1.1.1   2017-01-24
-##  yaml           2.1.18  2018-03-08
+##  yaml           2.1.19  2018-05-01
 ##  source                                     
 ##  CRAN (R 3.4.0)                             
 ##  cran (@1.1.2)                              
 ##  local                                      
-##  CRAN (R 3.4.0)                             
-##  CRAN (R 3.4.0)                             
+##  cran (@0.1.1)                              
+##  cran (@0.2.2)                              
 ##  CRAN (R 3.4.0)                             
 ##  Github (METRICS-CARPS/CARPSreports@95b6979)
 ##  CRAN (R 3.4.0)                             
@@ -764,7 +765,7 @@ if(reportType == &quot;final&quot;){
 ##  local                                      
 ##  CRAN (R 3.4.3)                             
 ##  cran (@0.6.14)                             
-##  cran (@0.7.4)                              
+##  cran (@0.7.5)                              
 ##  CRAN (R 3.4.1)                             
 ##  CRAN (R 3.4.0)                             
 ##  CRAN (R 3.4.1)                             
@@ -782,7 +783,7 @@ if(reportType == &quot;final&quot;){
 ##  CRAN (R 3.4.0)                             
 ##  cran (@1.20)                               
 ##  CRAN (R 3.4.1)                             
-##  CRAN (R 3.4.0)                             
+##  cran (@0.2.1)                              
 ##  CRAN (R 3.4.2)                             
 ##  CRAN (R 3.4.0)                             
 ##  CRAN (R 3.4.0)                             
@@ -796,31 +797,31 @@ if(reportType == &quot;final&quot;){
 ##  CRAN (R 3.4.0)                             
 ##  CRAN (R 3.4.0)                             
 ##  CRAN (R 3.4.1)                             
-##  CRAN (R 3.4.2)                             
+##  cran (@0.2.5)                              
 ##  CRAN (R 3.4.0)                             
 ##  cran (@0.12.17)                            
 ##  CRAN (R 3.4.0)                             
 ##  cran (@1.1.0)                              
 ##  CRAN (R 3.4.0)                             
-##  CRAN (R 3.4.3)                             
+##  cran (@0.2.1)                              
 ##  cran (@1.9)                                
 ##  cran (@1.3-2)                              
 ##  CRAN (R 3.4.1)                             
 ##  CRAN (R 3.4.0)                             
 ##  CRAN (R 3.4.1)                             
 ##  local                                      
-##  cran (@1.1.7)                              
-##  cran (@1.3.0)                              
+##  cran (@1.2.2)                              
+##  cran (@1.3.1)                              
 ##  CRAN (R 3.4.3)                             
 ##  cran (@0.7.2)                              
-##  cran (@0.2.2)                              
+##  cran (@0.2.4)                              
 ##  CRAN (R 3.4.2)                             
 ##  local                                      
 ##  CRAN (R 3.4.3)                             
 ##  local                                      
 ##  cran (@2.1.1)                              
 ##  CRAN (R 3.4.0)                             
-##  cran (@2.1.18)</code></pre>
+##  cran (@2.1.19)</code></pre>
 </div>
 
 

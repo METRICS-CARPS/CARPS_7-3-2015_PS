@@ -90,21 +90,30 @@ Each row is an observation. The data is already in tidy format.
 
 ### Pre-processing
 
-The codebook for Experiment 1 listed O, T, and M as the only primes that they used. However, we found that some participants had primes 2, 4, and 8 instead.
+The codebook for Experiment 1 listed `O`, `T`, and `M` as the only primes that they used. However, we found that some participants had primes `2`, `4`, and `8` instead.
 
-We inferred that 2 is the nonpredictive cue, 4 is the repeat predictive cue and 8 as the switch predictive cue based on how the other columns were named. 
+We inferred that `2` is the nonpredictive cue, `4` is the repeat predictive cue and `8` as the switch predictive cue based on how the other columns were named. 
 
 Thus we will proceed the analysis with this assumption by recoding the primes this way.
 
 ```{r bp-check-prime-codes, echo=FALSE, eval=FALSE}
+#
+# Note this, chunk is not a part of the evaluation, 
+# just for sanity checking
+#
 data %>% select(Block_Number) %>% unique
 
-# which participants have primes 2, 4, and 8
+
+# Prime coding
+# ------------
+
+# Participants with numbered primes 2, 4, and 8
 number_prime_ids <- data %>% 
   filter(Prime %in% c(2, 4, 8)) %>%
   select(id) %>%
   unique
 
+# Participants with lettered primes 2, 4, and 8
 letter_prime_ids <- data %>% 
   filter(Prime %in% c('O', 'M', 'T')) %>%
   select(id) %>% 
@@ -190,14 +199,13 @@ kable(mean_RespCorr[-1, ])
 ```
 
 ```{r bp-check-CorrResp, echo=FALSE}
-# TODO (BP): What is CorrResp
+# TODO (BP): What is CorrResp???
 mean_CorrResp <- data %>% 
         group_by(TrialType) %>%
         summarise(accuracyCorrResp = mean(CorrResp))
 ```
 
 ```{r mean_acc diff}
-
 reportObject <- reproCheck(reportedValue = "0.79", obtained = filter(mean_RespCorr, TrialType == "Switch Trials")$accuracy, valueType = 'mean')
 reportObject <- reproCheck(reportedValue = "0.92", obtained = filter(mean_RespCorr, TrialType == "Repeat Trials")$accuracy, valueType = 'mean')
 ```
@@ -373,13 +381,6 @@ the Prime was coded as "2", "4", and "8". However, we had to infer which number 
 looking at the variables names assigned to trial type and which cue followed ("stay_2", "stay_4", "swt_2", "swt_8"). 
 We coded 2=O, 4=T, 8=M, but still unsure whether these are consistent with how the authors coded the prime variable. We should note that some differences do seem exaggerated while subsetting by these two coding schemes -- data that received a prime coding `Prime in c(2, 4, 8)` appeared to have larger `RT` and `Acc` differences compared to those coded with `Prime in c("O", "T", "M")`.
 
-Also, it is unclear how "RespCorr" is coded - does "TRUE" reflect an accurate response for all blocks? The authors 
-noted that for the first 50 trials, responses just had to be correct to be considered an accurate response. 
-Thereafter, responses had to be both correct and fast (accurate but slow responses would be considered an error),
-with the threshold for speed placed at the 60th percentile for that participants' responses on the first 50 trials. 
-We did not calculate the 60th percentile threshold to see if the "RespCorr" was coded correctly, though we did 
-yield the same accuracy rates between switch and repeat trials.
-
 **Ambiguity between using means or medians**
 
 In the article it states that, unless otherwise noted, statistical tests were performed on median values rather than mean 
@@ -395,14 +396,6 @@ findings using either means or medians for the following findings:
 This point was perhaps the most frustrating in analyzing reaction time. When we tried to reproduce reaction time medians, we realized that the value could have been obtained by calculating a value (mean or median) for each individual, then summarizing those values to one value (mean or median), OR it could have been obtained by a value (mean or median) across ALL trials. We 
 tried a host of combinations of means or medians with across individuals or across trials, and still could not
 replicate the descriptive reaction times.
-
-**Exclusion Criteria**
-
-What data points did the author's exclude? It is not clear after reading this paragraph:
-
->If participants were able to learn the predictive value of the cue that preceded only switch trials and could instantiate relevant anticipatory control in response to it,
-
-We don't know how the author's operationalized "learning the predictive value". Does that mean  excluding trials with incorrect responses? Excluding participants with too many incorrect responses?  Neither the codebook nor the paper provided sufficient information to enable us to repeat these exclusions.
 
 ```{r}
 Author_Assistance = FALSE # was author assistance provided? (if so, enter TRUE)
