@@ -12,10 +12,10 @@ reportType <- 'final'
 pilotNames <- "Danielle Boles, Michael Ko" # insert the pilot's name here e.g., "Tom Hardwicke". If there are multiple pilots enter both names in a character string e.g., "Tom Hardwicke, Bob Dylan"
 copilotNames <- "Ben Peloquin" # insert the co-pilot's name here e.g., "Michael Frank". If there are multiple co-pilots enter both names in a character string e.g., "Tom Hardwicke, Bob Dylan"
 pilotTTC <- 150 # insert the pilot's estimated time to complete (in minutes, fine to approximate) e.g., 120
-copilotTTC <- 165 # insert the co- pilot's estimated time to complete (in minutes, fine to approximate) e.g., 120
+copilotTTC <- 200 # insert the co- pilot's estimated time to complete (in minutes, fine to approximate) e.g., 120
 pilotStartDate <- as.Date("10/27/17", format = "%m/%d/%y") # insert the pilot's start date in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
 copilotStartDate <- as.Date("06/13/18", format = "%m/%d/%y") # insert the co-pilot's start date in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
-completionDate <- as.Date("", format = "%m/%d/%y") # copilot insert the date of final report completion (after any necessary rounds of author assistance) in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
+completionDate <- as.Date("04/20/19", format = "%m/%d/%y") # copilot insert the date of final report completion (after any necessary rounds of author assistance) in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
 ```
 
 -------
@@ -53,7 +53,7 @@ reportObject <- data.frame(dummyRow = TRUE, reportedValue = NA, obtainedValue = 
 ## Step 2: Load data
 
 ```{r warning=FALSE}
-# This reads all the particiapnts data (each is in a seperate xls file) in and combines them into one dataframe
+# This reads all the participants data (each is in a seperate xls file) in and combines them into one dataframe
 # Each xls has 250 rows, the rest is their calculations using excel, which we don't want in the data
 files <- dir('data/Experiment 1')
 
@@ -81,7 +81,6 @@ Do we have data from 21 participants as expected?
 assertthat::are_equal(length(unique(data$id)), 21)
 ```
 
-
 ## Step 3: Tidy data
 
 Each row is an observation. The data is already in tidy format.
@@ -93,7 +92,6 @@ Each row is an observation. The data is already in tidy format.
 The codebook for Experiment 1 listed `O`, `T`, and `M` as the only primes that they used. However, we found that some participants had primes `2`, `4`, and `8` instead.
 
 We inferred that `2` is the nonpredictive cue, `4` is the repeat predictive cue and `8` as the switch predictive cue based on how the other columns were named. 
-
 Thus we will proceed the analysis with this assumption by recoding the primes this way.
 
 ```{r bp-check-prime-codes, echo=FALSE, eval=FALSE}
@@ -121,7 +119,6 @@ letter_prime_ids <- data %>%
 
 # One person seems to have seen both???
 intersect(number_prime_ids$id, letter_prime_ids$id)
-
 
 # Occurences of numbered primes...
 data %>%
@@ -152,6 +149,7 @@ We will first try to reproduce median reaction time of switch trials and repeat 
 > Performance on switch trials, relative to repeat trials, incurred a switch cost that was evident in longer RTs (836 vs. 689 ms)
 
 We used median as the author's instructed to use median for reaction time unless otherwise reported:
+
 > unless stated otherwise, the statistical tests were performed on the more stable median values rather than mean values.
 
 ```{r median_RT}
@@ -163,32 +161,30 @@ med_RT <- data %>%
 kable(med_RT[-1, ])
 ```
 
+```{r median_RT diff}
+reportObject <- reproCheck(reportedValue = "836", obtained = filter(med_RT, TrialType == "Switch Trials")$median_RT, valueType = 'median')
+reportObject <- reproCheck(reportedValue = "689", obtained = filter(med_RT, TrialType == "Repeat Trials")$median_RT, valueType = 'median')
+```
+
+Note than means would not have matched either.
+
+Now we are checking if only including participants with 'letter' primes enables us to reproduce the target values...
+
 ```{r bp-check-RTs-filtered-on-OMT, echo=FALSE, eval=FALSE}
-# here we are checking if only including participants with 'letter' primes enables us to reproduce the target values (it doesn't).
 data %>% 
   filter(originalPrime %in% c("O", "M", "T")) %>%
   group_by(TrialType) %>% 
   summarise(median_RT = median(RT),
             n=n())
-
 ```
 
-
-These values are slightly off. There is ambiguity in how to calculate these statistics which is detailed below. 
-
-[INSUFFICIENT INFORMATION ERROR]
-
-```{r median_RT diff}
-reportObject <- reproCheck(reportedValue = "836", obtained = filter(med_RT, TrialType == "Switch Trials")$median_RT, valueType = 'median')
-reportObject <- reproCheck(reportedValue = "689", obtained = filter(med_RT, TrialType == "Repeat Trials")$median_RT, valueType = 'median')
-```
+This would not have matched either.
 
 -----------------
 
 Next we will try to reproduce the accuracy of switch trials and repeat trials.
 
 > Performance on switch trials, relative to repeat trials, incurred a switch cost that was evident in [...] lower accuracy rates (79% vs. 92%)
-
 
 ```{r mean_Correct_Response}
 mean_RespCorr <- data %>% 
@@ -198,19 +194,12 @@ mean_RespCorr <- data %>%
 kable(mean_RespCorr[-1, ])
 ```
 
-```{r bp-check-CorrResp, echo=FALSE}
-# TODO (BP): What is CorrResp???
-mean_CorrResp <- data %>% 
-        group_by(TrialType) %>%
-        summarise(accuracyCorrResp = mean(CorrResp))
-```
-
 ```{r mean_acc diff}
 reportObject <- reproCheck(reportedValue = "0.79", obtained = filter(mean_RespCorr, TrialType == "Switch Trials")$accuracy, valueType = 'mean')
 reportObject <- reproCheck(reportedValue = "0.92", obtained = filter(mean_RespCorr, TrialType == "Repeat Trials")$accuracy, valueType = 'mean')
 ```
 
-Minor error: These values are extremeley close although rounding mean for accuracy repeat accuracy is slightly different.
+Minor errors: These values are extremeley close although rounding mean for accuracy repeat accuracy is slightly different.
 
 --------------------
 
@@ -218,7 +207,7 @@ Now we will analyze Predicitve Switch Cues vs Nonpredictive Switch Cues. Let's s
 
 > This was indeed the case (mean RT-predictive cue: 819 ms; nonpredictive cue: 871 ms; ... )
 
-Later the authors do a t test with 20 as the degrees of freedoms. So we will assume that these mean values come from individual medians of RT.
+Later the authors do a t test with 20 as the degrees of freedoms. So we will assume that these mean values come from individual RT averages.
 
 ```{r mean Prime RT}
 mean_Prime_RT_Ind <- data %>% 
@@ -233,13 +222,17 @@ mean_Prime_RT <- mean_Prime_RT_Ind %>% group_by(Prime) %>%
 kable(mean_Prime_RT)
 ```
 
-These numbers don't match. 
-
-[INSUFFICIENT INFORMATION ERROR]
+Minor errors here. Report:
 
 ```{r mean Prime RT diff}
-reportObject <- reproCheck(reportedValue = "819", obtained = 883.4, valueType = 'mean')
-reportObject <- reproCheck(reportedValue = "871", obtained = 907.8, valueType = 'mean')
+
+npc_mean <- mean_Prime_RT %>% filter(Prime == "Nonpredictive Cue") %>% pull(grandmeanRT)
+
+reportObject <- reproCheck(reportedValue = "871", obtained = npc_mean, valueType = 'mean')
+
+spc_mean <- mean_Prime_RT %>% filter(Prime == "Switch Predictive Cue") %>% pull(grandmeanRT)
+
+reportObject <- reproCheck(reportedValue = "819", obtained = spc_mean, valueType = 'mean')
 ```
 
 ```{r bp-check-switch-times, echo=FALSE, eval=FALSE}
@@ -257,13 +250,13 @@ data %>%
             grandMedianRT=median(medianRT)) #Grand Means
 ```
 
+These would not have matched either.
+
 ---------------------------
 
-Next we will try to reproduce accuracy of switch predicitve cues vs switch nonpredictive cues.
+Next we will try to reproduce error rates for switch predicitve cues vs switch nonpredictive cues.
 
 > However, error rates did not differ across these two groups of switch trials (predictive cue: 78.9%; nonpredictive cue: 78.8%)
-
-Again, we will asssume that the accuracy statistic was calculated from the mean of each individual participant's accuracy.
 
 ```{r Prime Accuracy}
 mean_Prime_RespCorr_Ind <- data %>% filter(TrialType == "Switch Trials") %>% group_by(id, Prime) %>% summarise(meanCorr = mean(RespCorr)) #Individual Means
@@ -285,7 +278,6 @@ df_accuracy %>%
 
 ```
 
-
 These numbers are fairly close to the reported numbers. 
 
 ```{r Prime Accuracy Diff}
@@ -295,8 +287,7 @@ reportObject <- reproCheck(reported = ".788", obtained = .7803, valueType = 'mea
 
 ### Inferential statistics
 
-The first claim is that in switch trials, predictive cues lead to statistically significant faster reaction times 
-than nonpredictive cues.
+The first claim is that in switch trials, predictive cues lead to statistically significant faster reaction times than nonpredictive cues.
 
 > ... the performance on switch trials preceded by this cue would be better than on switch trials preceded by the nonpredictive cue. This was indeed the case (mean RT-predictive cue: 819 ms; nonpredictive cue: 871 ms; mean difference = 52 ms, 95% confidence interval, or CI = [19.5, 84.4]), two-tailed paired t(20) = 3.34, p < .01.
 
@@ -308,13 +299,23 @@ test <- t.test(mean_Prime_RT_Ind[['Nonpredictive Cue']], mean_Prime_RT_Ind[['Swi
 kable(tidy(test))
 ```
 
+```{r}
+reportObject <- reproCheck(reportedValue = "<.01", obtained = test$p.value, valueType = 'p', eyeballCheck = FALSE)
 
+reportObject <- reproCheck(reportedValue = "19.5", obtained = test$conf.int[1], valueType = 'ci')
+
+reportObject <- reproCheck(reportedValue = "84.4", obtained = test$conf.int[2], valueType = 'ci')
+
+reportObject <- reproCheck(reportedValue = "20", obtained = test$parameter, valueType = 'df')
+
+reportObject <- reproCheck(reportedValue = "3.34", obtained = test$statistic, valueType = 't')
+```
 
 We do not find the same p value as the original paper. There is ambiguity in how to calculate this statistic which is detailed below.
 
 [INSUFFICIENT INFORMATION ERROR]
 
-**Check** - note that differences in reaction time are quite different a function of `Prime` coding. This just supports the notion that we need to better understand the coding differences before trying to reproduce all the analyses.
+**Check** - note that differences in reaction time could be due to differences in `Prime` coding. This just supports the notion that we need to better understand the coding differences before trying to reproduce all the analyses.
 
 ```{r bp-prime-rt-ttest}
 # Differences in reaction time t.test by prime coding
@@ -330,11 +331,13 @@ kable(tidy(test1))
 kable(tidy(test2))
 ```
 
+But none of these ways of doing the analysis produce outcomes matching the reported outcomes.
+
 -----------------
 
 Next we will test the second claim.
 
-> However, error rates did not differ across these two groups ofswitch trials (predictive cue: 78.9%; nonpredictive cue: 78.8%), p = .8.
+> However, error rates did not differ across these two groups of switch trials (predictive cue: 78.9%; nonpredictive cue: 78.8%), p = .8.
 
 ```{r mean Prime accuracy test}
 mean_Prime_RespCorr_Ind <- 
@@ -343,7 +346,7 @@ mean_Prime_RespCorr_Ind <-
 test <- 
   t.test(mean_Prime_RespCorr_Ind[['Nonpredictive Cue']], 
          mean_Prime_RespCorr_Ind[['Switch Predictive Cue']], paired = TRUE)
-
+thisP <- test$p.value
 kable(tidy(test))
 ```
 
@@ -355,37 +358,32 @@ mean_Prime_RespCorr_Ind %>%
 
 ```
 
-
-Although still insignificant, the p value is very different from what was reported.
+Although still not significant, the p value is very different from what was reported.
 
 ```{r mean Prime accuracy test diff}
-reportObject <- reproCheck(reportedValue = ".8", obtained = .2945, valueType = 'p')
+reportObject <- reproCheck(reportedValue = ".8", obtained = thisP, valueType = 'p')
 ```
-
 
 ## Step 5: Conclusion
 
-In our initial attempts we have not been able to reproduce several target outcomes. Generally, all the reaction time statistics (even the means) were different from what was reported. There are a number of possible reasons:
+In our initial attempts we have not been able to reproduce several target outcomes. Generally, all the reaction time statistics (whether we tried means or medians) were different from what was reported, although these were classified as 'minor errors'. Ultimately though there were major errors for inferential tests, which could stem from a problem earlier in the analysis pipeline. 
+
+There are a number of aspects of the original analysis / data files we are unclear about. We have e-mailed the original authors several times but not recieved a response to our questions (we have recieved responses saying they will get back to us, but this has not happened > 9 months after the last message). We have thus classifed these issues as 4 'insufficient information errors'. The issues we are unclear about are as follows:
 
 **Unclear labels for variables**
 
-There is a variable "CorrResp" (1 or 0) and another variable "RespCorr" (TRUE or FALSE). We used "RespCorr" 
-because it was the only variable of the two that was included in the codebook where TRUE=Accurate response 
+In the data file, there is a variable "CorrResp" (1 or 0) and another variable "RespCorr" (TRUE or FALSE). We used "RespCorr" because it was the only variable of the two that was included in the codebook where TRUE=Accurate response 
 and FALSE=Error. But we still don't know what "CorrResp" is and whether or not it was used in the original analyses.
 
 **Unclear recoding of variables**
 
-In the data file, there is 1 excel file per participant with all of their reaction times to the 250 trials. 
-For some participants, the Prime was coded as the actual prime shown "O", "T", or "M". For other participants, 
-the Prime was coded as "2", "4", and "8". However, we had to infer which number corresponded to each letter by 
-looking at the variables names assigned to trial type and which cue followed ("stay_2", "stay_4", "swt_2", "swt_8"). 
-We coded 2=O, 4=T, 8=M, but still unsure whether these are consistent with how the authors coded the prime variable. We should note that some differences do seem exaggerated while subsetting by these two coding schemes -- data that received a prime coding `Prime in c(2, 4, 8)` appeared to have larger `RT` and `Acc` differences compared to those coded with `Prime in c("O", "T", "M")`.
+In the data file, there is 1 excel file per participant with all of their reaction times to the 250 trials. For some participants, the Prime was coded as the actual prime shown "O", "T", or "M". For other participants, the Prime was coded as "2", "4", and "8". However, we had to infer which number corresponded to each letter by  looking at the variables names assigned to trial type and which cue followed ("stay_2", "stay_4", "swt_2", "swt_8").
+
+We coded 2=O, 4=T, 8=M, but we are still unsure whether these are consistent with how the authors coded the prime variable. We should note that some differences do seem exaggerated while subsetting by these two coding schemes -- data that received a prime coding `Prime in c(2, 4, 8)` appeared to have larger `RT` and `Acc` differences compared to those coded with `Prime in c("O", "T", "M")`.
 
 **Ambiguity between using means or medians**
 
-In the article it states that, unless otherwise noted, statistical tests were performed on median values rather than mean 
-values. We followed this according to the paper's protocol. However, we're not able to reproduce the following 
-findings using either means or medians for the following findings:
+In the article it states that, unless otherwise noted, statistical tests were performed on median values rather than mean values. We followed this according to the paper's protocol. However, we're not able to reproduce the following outcomes using either means or medians for the following findings:
 
 * "performance on switch trials, relative to repeat trials, incurred a switch cost that was evident in longer RTs (836 vs. 689 ms)"
         
@@ -393,14 +391,12 @@ findings using either means or medians for the following findings:
         
 **Unclear whether descriptives of means/medians of means/medians of individuals, or means/medians across all trials**
 
-This point was perhaps the most frustrating in analyzing reaction time. When we tried to reproduce reaction time medians, we realized that the value could have been obtained by calculating a value (mean or median) for each individual, then summarizing those values to one value (mean or median), OR it could have been obtained by a value (mean or median) across ALL trials. We 
-tried a host of combinations of means or medians with across individuals or across trials, and still could not
-replicate the descriptive reaction times.
+When we tried to reproduce reaction time medians, we realized that the value could have been obtained by calculating a value (mean or median) for each individual, then summarizing those values to one value (mean or median), OR it could have been obtained by a value (mean or median) across ALL trials. We tried several combinations of means or medians with across individuals or across trials, and still could not replicate the descriptive reaction times.
 
 ```{r}
-Author_Assistance = FALSE # was author assistance provided? (if so, enter TRUE)
+Author_Assistance = TRUE # was author assistance provided? (if so, enter TRUE)
 
-Insufficient_Information_Errors <- 3 # how many discrete insufficient information issues did you encounter?
+Insufficient_Information_Errors <- 4 # how many discrete insufficient information issues did you encounter?
 
 # Assess the causal locus (discrete reproducibility issues) of any reproducibility errors. Note that there doesn't necessarily have to be a one-to-one correspondance between discrete reproducibility issues and reproducibility errors. For example, it could be that the original article neglects to mention that a Greenhouse-Geisser correct was applied to ANOVA outcomes. This might result in multiple reproducibility errors, but there is a single causal locus (discrete reproducibility issue).
 
