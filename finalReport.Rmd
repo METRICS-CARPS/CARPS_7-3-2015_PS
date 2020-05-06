@@ -41,7 +41,7 @@ library(tidyverse) # for data munging
 library(knitr) # for kable table formating
 library(haven) # import and export 'SPSS', 'Stata' and 'SAS' Files
 library(readxl) # import excel files
-library(CARPSreports) # custom report functions
+library(ReproReports) # custom report functions
 library(broom)
 ```
 
@@ -394,7 +394,7 @@ In the article it states that, unless otherwise noted, statistical tests were pe
 When we tried to reproduce reaction time medians, we realized that the value could have been obtained by calculating a value (mean or median) for each individual, then summarizing those values to one value (mean or median), OR it could have been obtained by a value (mean or median) across ALL trials. We tried several combinations of means or medians with across individuals or across trials, and still could not replicate the descriptive reaction times.
 
 ```{r}
-Author_Assistance = TRUE # was author assistance provided? (if so, enter TRUE)
+Author_Assistance = FALSE # was author assistance provided? (if so, enter TRUE)
 
 Insufficient_Information_Errors <- 4 # how many discrete insufficient information issues did you encounter?
 
@@ -407,11 +407,11 @@ locus_data <- 0 # how many discrete issues did you encounter that related to err
 locus_unidentified <- 3 # how many discrete issues were there for which you could not identify the cause
 
 # How many of the above issues were resolved through author assistance?
-locus_typo_resolved <- NA # how many discrete issues did you encounter that related to typographical errors?
-locus_specification_resolved <- NA # how many discrete issues did you encounter that related to incomplete, incorrect, or unclear specification of the original analyses?
-locus_analysis_resolved <- NA # how many discrete issues did you encounter that related to errors in the authors' original analyses?
-locus_data_resolved <- NA # how many discrete issues did you encounter that related to errors in the data files shared by the authors?
-locus_unidentified_resolved <- NA # how many discrete issues were there for which you could not identify the cause
+locus_typo_resolved <- 0 # how many discrete issues did you encounter that related to typographical errors?
+locus_specification_resolved <- 0 # how many discrete issues did you encounter that related to incomplete, incorrect, or unclear specification of the original analyses?
+locus_analysis_resolved <- 0 # how many discrete issues did you encounter that related to errors in the authors' original analyses?
+locus_data_resolved <- 0 # how many discrete issues did you encounter that related to errors in the data files shared by the authors?
+locus_unidentified_resolved <- 0 # how many discrete issues were there for which you could not identify the cause
 
 Affects_Conclusion <- TRUE # Do any reproducibility issues encounter appear to affect the conclusions made in the original article? This is a subjective judgement, but you should taking into account multiple factors, such as the presence/absence of decision errors, the number of target outcomes that could not be reproduced, the type of outcomes that could or could not be reproduced, the difference in magnitude of effect sizes, and the predictions of the specific hypothesis under scrutiny.
 ```
@@ -424,7 +424,7 @@ reportObject <- reportObject %>%
   select(articleID, everything()) # make articleID first column
 
 # decide on final outcome
-if(any(reportObject$comparisonOutcome %in% c("MAJOR_ERROR", "DECISION_ERROR")) | Insufficient_Information_Errors > 0){
+if(any(!(reportObject$comparisonOutcome %in% c("MATCH", "MINOR_ERROR"))) | Insufficient_Information_Errors > 0){
   finalOutcome <- "Failure without author assistance"
   if(Author_Assistance == T){
     finalOutcome <- "Failure despite author assistance"
