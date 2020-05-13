@@ -366,7 +366,7 @@ reportObject <- reproCheck(reportedValue = ".8", obtained = thisP, valueType = '
 
 ## Step 5: Conclusion
 
-In our initial attempts we have not been able to reproduce several target outcomes. Generally, all the reaction time statistics (whether we tried means or medians) were different from what was reported, although these were classified as 'minor errors'. Ultimately though there were major errors for inferential tests, which could stem from a problem earlier in the analysis pipeline. 
+In our initial attempts we were not able to reproduce several target outcomes. Generally, all the reaction time statistics (whether we tried means or medians) were different from what was reported, although these were classified as 'minor numerical errors'. Ultimately though there were major errors for inferential test statistics, which could stem from a problem earlier in the analysis pipeline. 
 
 There are a number of aspects of the original analysis / data files we are unclear about. We have e-mailed the original authors several times but not recieved a response to our questions (we have recieved responses saying they will get back to us, but this has not happened > 9 months after the last message). We have thus classifed these issues as 4 'insufficient information errors'. The issues we are unclear about are as follows:
 
